@@ -66,8 +66,9 @@
     boss:{name:'Boss Core',icon:'👁️',hp:620,armor:12,speed:34,reward:110,color:'#ff2c79',boss:true}
   };
 
-  let game, lastTime=0, audioUnlocked=false;
+  let game, lastTime=0, audioUnlocked=false, audioMuted=false, audioCtx=null, dockMode='towers';
   const audioFiles = {};
+  const soundNames = ['tap','place','shoot','blast','coin','wave','win','lose','flame','zap','ice','poison','rocket','shadow','laser','nova','mine','drone','upgrade'];
 
   function makeGame(levelKey='neon') {
     const level = levels[levelKey] || levels.neon;
@@ -79,16 +80,69 @@
   const path = () => levels[game.levelKey].path;
   const level = () => levels[game.levelKey];
 
-  function loadAudio(){['tap','place','shoot','blast','coin','wave','win','lose','flame','zap','ice','poison','rocket','shadow','laser','nova','mine','drone','upgrade'].forEach(n=>{const a=new Audio(`assets/sfx/${n}.wav`);a.preload='auto';audioFiles[n]=a;});}
-  function playSound(name,vol=.28){if(!audioUnlocked)return;const base=audioFiles[name]||audioFiles.tap;if(!base)return;try{const s=base.cloneNode();s.volume=vol;s.play().catch(()=>{});}catch(_){}}
-  function unlockAudio(){if(audioUnlocked)return;audioUnlocked=true;Object.values(audioFiles).forEach(a=>{try{a.load()}catch(_){}})}
+  function makeAudio(name){
+    const a=new Audio(`assets/sfx/${name}.wav`);
+    a.preload='auto';
+    a.dataset.altSrc=`sfx/${name}.wav`;
+    a.addEventListener('error',()=>{
+      if(a.dataset.altSrc&&!a.dataset.triedAlt){
+        a.dataset.triedAlt='1';
+        a.src=a.dataset.altSrc;
+        try{a.load()}catch(_){}
+      }
+    });
+    return a;
+  }
+  function loadAudio(){soundNames.forEach(n=>{audioFiles[n]=makeAudio(n);});}
+  function synthSound(name,vol=.18){
+    if(!audioCtx||audioMuted)return;
+    try{
+      const now=audioCtx.currentTime;
+      const osc=audioCtx.createOscillator();
+      const gain=audioCtx.createGain();
+      const map={tap:[520,.045,'square'],place:[260,.08,'triangle'],coin:[880,.09,'sine'],wave:[190,.16,'sawtooth'],blast:[90,.22,'sawtooth'],win:[660,.24,'triangle'],lose:[120,.3,'sawtooth'],flame:[150,.08,'sawtooth'],zap:[1040,.06,'square'],ice:[720,.1,'sine'],poison:[310,.12,'triangle'],rocket:[130,.14,'sawtooth'],shadow:[220,.13,'sine'],laser:[980,.08,'square'],nova:[170,.18,'triangle'],mine:[95,.2,'sawtooth'],drone:[440,.12,'square'],upgrade:[760,.18,'triangle']};
+      const cfg=map[name]||map.tap;
+      osc.type=cfg[2];
+      osc.frequency.setValueAtTime(cfg[0],now);
+      osc.frequency.exponentialRampToValueAtTime(Math.max(50,cfg[0]*1.55),now+cfg[1]);
+      gain.gain.setValueAtTime(Math.max(.001,vol*.55),now);
+      gain.gain.exponentialRampToValueAtTime(.001,now+cfg[1]);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(now); osc.stop(now+cfg[1]+.02);
+    }catch(_){}
+  }
+  function playSound(name,vol=.28){
+    if(!audioUnlocked||audioMuted)return;
+    const base=audioFiles[name]||audioFiles.tap;
+    if(base){
+      try{
+        const s=base.cloneNode(true);
+        s.volume=vol;
+        const p=s.play();
+        if(p&&p.catch)p.catch(()=>synthSound(name,vol));
+        return;
+      }catch(_){}
+    }
+    synthSound(name,vol);
+  }
+  function unlockAudio(){
+    if(!audioCtx){
+      const Ctx=window.AudioContext||window.webkitAudioContext;
+      if(Ctx)audioCtx=new Ctx();
+    }
+    if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
+    if(audioUnlocked)return;
+    audioUnlocked=true;
+    Object.values(audioFiles).forEach(a=>{try{a.load()}catch(_){}});
+    setTimeout(()=>playSound('tap',.18),0);
+  }
 
   function loadUnlockedLevel(){try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'{}').unlockedLevel||0}catch(_){return 0}}
   function levelIsUnlocked(k){return game.levelUnlocked >= Object.values(levels).findIndex(l=>l.key===k)}
   function saveProgress(){let data={};try{data=JSON.parse(localStorage.getItem(SAVE_KEY)||'{}')}catch(_){};data.bestWave=Math.max(data.bestWave||0,game.wave||0);data.bestScore=Math.max(data.bestScore||0,game.score||0);const idx=Object.values(levels).findIndex(l=>l.key===game.levelKey);if(game.wave>=levels[game.levelKey].unlockWave+4)data.unlockedLevel=Math.max(data.unlockedLevel||0,Math.min(Object.keys(levels).length-1,idx+1));localStorage.setItem(SAVE_KEY,JSON.stringify(data));loadBest();}
   function loadBest(){let d={};try{d=JSON.parse(localStorage.getItem(SAVE_KEY)||'{}')}catch(_){};$('bestWaveText').textContent=d.bestWave||0;$('bestScoreText').textContent=d.bestScore||0;if(game)game.levelUnlocked=d.unlockedLevel||0;}
 
-  function showScreen(name){game.screen=name;$('menuScreen').classList.toggle('active',name==='menu');$('gameScreen').classList.toggle('active',name==='game');updateUI();}
+  function showScreen(name){game.screen=name;document.body.classList.toggle('game-active',name==='game');$('menuScreen').classList.toggle('active',name==='menu');$('gameScreen').classList.toggle('active',name==='game');updateUI();}
   function showToast(text,ms=1700){const t=$('toast');t.textContent=text;t.classList.remove('hidden');clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>t.classList.add('hidden'),ms);}
   function openModal(html){$('modalBody').innerHTML=html;$('modal').classList.remove('hidden');document.body.style.overflow='hidden';}
   function closeModal(){$('modal').classList.add('hidden');document.body.style.overflow='';}
@@ -167,22 +221,48 @@
   function updateCooldowns(dt){Object.values(game.abilities).forEach(a=>a.cd=Math.max(0,a.cd-dt))}
   function formatCooldown(a){return a.cd<=0?'Ready':`${Math.ceil(a.cd)}s`}
 
-  function buildTowerButtons(){const wrap=$('towerButtons');wrap.innerHTML='';Object.values(towerTypes).forEach(t=>{const btn=document.createElement('button');btn.className='tower-btn';btn.dataset.tower=t.key;btn.innerHTML=`<strong>${t.icon} ${t.name}</strong><small>${t.desc}<br>${t.cost} coins</small>`;btn.onclick=()=>{unlockAudio();playSound('tap');game.selectedType=game.selectedType===t.key?null:t.key;game.selectedTool=null;game.selectedTowerId=null;$('towerPanel').classList.add('hidden');updateUI()};wrap.appendChild(btn)})}
+  function selectTowerType(key){unlockAudio();playSound('tap');const t=towerTypes[key];if(!t)return;if(game.coins<t.cost){showToast('Not enough coins for that tower.');return}game.selectedType=game.selectedType===key?null:key;game.selectedTool=null;game.selectedTowerId=null;$('towerPanel').classList.add('hidden');updateUI()}
+  function selectToolMode(key){unlockAudio();playSound('tap');const costs={barrier:135,boost:170,scrap:0};if(key!=='scrap'&&game.coins<costs[key]){showToast('Not enough coins for that tool.');return}game.selectedTool=game.selectedTool===key?null:key;game.selectedType=null;game.selectedTowerId=null;$('towerPanel').classList.add('hidden');updateUI()}
+  function setDockMode(mode){dockMode=mode;['Towers','Tools','Abilities'].forEach(n=>{const el=$(`dock${n}Tab`);if(el)el.classList.toggle('active',dockMode===n.toLowerCase())});buildQuickDock()}
+  function buildQuickDock(){
+    const wrap=$('quickDockGrid');if(!wrap)return;wrap.innerHTML='';
+    if(dockMode==='towers'){
+      Object.values(towerTypes).forEach(t=>{const btn=document.createElement('button');btn.className='dock-item';btn.dataset.tower=t.key;btn.innerHTML=`<strong>${t.icon} ${t.name}</strong><small>${t.cost} coins • tap map to place</small>`;btn.onclick=()=>selectTowerType(t.key);wrap.appendChild(btn)});
+    }else if(dockMode==='tools'){
+      const tools=[['barrier','🛡️ Barrier','135 coins • path slow field'],['boost','💠 Boost','170 coins • tower buff pad'],['scrap','♻️ Scrap','tap placed tool to refund']];
+      tools.forEach(([key,label,desc])=>{const btn=document.createElement('button');btn.className='dock-item';btn.dataset.tool=key;btn.innerHTML=`<strong>${label}</strong><small>${desc}</small>`;btn.onclick=()=>selectToolMode(key);wrap.appendChild(btn)});
+    }else{
+      const list=[['emp','🧊 EMP','freeze enemies'],['repair','💚 Repair','restore core lives'],['overdrive','⚡ Overdrive','buff all towers'],['mine','💣 Mine','instant path trap'],['drone','🛸 Drone','hit all enemies']];
+      list.forEach(([key,label,desc])=>{const btn=document.createElement('button');btn.className='dock-item';btn.dataset.ability=key;btn.innerHTML=`<strong>${label}</strong><small>${desc}</small>`;btn.onclick=()=>useAbility(key);wrap.appendChild(btn)});
+    }
+    updateQuickDockState();
+  }
+  function updateQuickDockState(){
+    const wrap=$('quickDockGrid');if(!wrap||!game)return;
+    wrap.querySelectorAll('.dock-item').forEach(btn=>{
+      const tower=btn.dataset.tower,tool=btn.dataset.tool,ability=btn.dataset.ability;
+      if(tower){const t=towerTypes[tower];btn.classList.toggle('selected',game.selectedType===tower);btn.disabled=game.coins<t.cost;}
+      if(tool){const costs={barrier:135,boost:170,scrap:0};btn.classList.toggle('selected',game.selectedTool===tool);btn.disabled=tool!=='scrap'&&game.coins<costs[tool];}
+      if(ability){const a=game.abilities[ability];btn.disabled=!a||a.cd>0||game.screen!=='game';btn.classList.toggle('ready',!!a&&a.cd<=0);const small=btn.querySelector('small');if(small&&a)small.textContent=a.cd<=0?'Ready':`${Math.ceil(a.cd)}s cooldown`;}
+    });
+  }
+
+  function buildTowerButtons(){const wrap=$('towerButtons');wrap.innerHTML='';Object.values(towerTypes).forEach(t=>{const btn=document.createElement('button');btn.className='tower-btn';btn.dataset.tower=t.key;btn.innerHTML=`<strong>${t.icon} ${t.name}</strong><small>${t.desc}<br>${t.cost} coins</small>`;btn.onclick=()=>selectTowerType(t.key);wrap.appendChild(btn)})}
   function buildLevelButtons(){const wrap=$('levelButtons');if(!wrap)return;wrap.innerHTML='';Object.values(levels).forEach((l,i)=>{const locked=game.levelUnlocked<i;const btn=document.createElement('button');btn.className='level-btn '+(game.levelKey===l.key?'selected':'');btn.disabled=locked;btn.innerHTML=`<strong>${l.icon} ${l.name}</strong><small>${locked?'Unlock by surviving more waves':l.desc}</small>`;btn.onclick=()=>{unlockAudio();if(locked)return;game.levelKey=l.key;playSound('tap');if(game.screen==='game'&&!game.waveActive&&!game.towers.length&&!game.enemies.length){game.lives=l.lives;game.coins=l.startCoins}buildLevelButtons();updateUI();showToast(`${l.name} selected.`)};wrap.appendChild(btn)})}
   function updateTowerButtonState(){document.querySelectorAll('.tower-btn').forEach(btn=>{const key=btn.dataset.tower,t=towerTypes[key];btn.classList.toggle('selected',game.selectedType===key);btn.disabled=game.coins<t.cost})}
   function updateToolButtons(){[['barrierToolBtn','barrier'],['boostToolBtn','boost'],['scrapToolBtn','scrap']].forEach(([id,k])=>{const b=$(id);if(!b)return;b.classList.toggle('selected',game.selectedTool===k)})}
   function updateAbilitiesUI(){[['emp','empText','empBtn'],['repair','repairText','repairBtn'],['overdrive','overdriveText','overdriveBtn'],['mine','mineText','mineBtn'],['drone','droneText','droneBtn']].forEach(([k,t,b])=>{const a=game.abilities[k];if(!$(t))return;$(t).textContent=formatCooldown(a);$(b).disabled=a.cd>0||game.screen!=='game';$(b).classList.toggle('ready',a.cd<=0&&game.screen==='game')})}
   function updateMissionsUI(){const w=$('missionList');if(!w)return;w.innerHTML=(game.missions||[]).map(m=>`<div class="mission-item ${m.done?'done':''}"><strong>${m.done?'✅':'🎯'} ${m.text}</strong><span>${Math.min(m.target,m.read())}/${m.target}</span></div>`).join('')}
   function updateStatusText(){if(game.gameOver||game.victory)return;if(game.selectedTool){$('statusText').textContent=game.selectedTool==='barrier'?'Tap the path to place a Barrier Gate.':game.selectedTool==='boost'?'Tap near towers to place a Boost Pad.':'Tap a field tool to scrap it.'}else if(game.selectedType){const t=towerTypes[game.selectedType];$('statusText').textContent=`${t.icon} ${t.name} selected. Tap an empty spot away from the path.`}else if(game.selectedTowerId){const t=getSelectedTower();if(t)$('statusText').textContent=`${towerTypes[t.type].name} selected. Upgrade, mod, or sell it.`}else if(!game.waveActive){$('statusText').textContent=`${level().icon} ${level().name}: Build towers/tools, then start the wave.`}else $('statusText').textContent='Wave running — towers attack automatically.'}
-  function updateUI(refresh=true){if(!game)return;$('waveText').textContent=game.waveActive?`${game.wave}/${MAX_WAVES}`:`${Math.min(game.wave+1,MAX_WAVES)}/${MAX_WAVES}`;$('livesText').textContent=game.lives;$('coinsText').textContent=game.coins;$('scoreText').textContent=game.score;$('startWaveBtn').disabled=game.waveActive||game.gameOver||game.victory;$('startWaveBtn').textContent=game.waveActive?'Wave Running':game.wave>=MAX_WAVES?'Complete':'Start Wave';$('pauseBtn').textContent=game.paused?'Resume':'Pause';$('speedBtn').textContent=`${game.speed}x Speed`;updateAbilitiesUI();updateMissionsUI();updateToolButtons();if(refresh)updateTowerButtonState();if(game.selectedTowerId)showTowerPanel();updateStatusText()}
+  function updateUI(refresh=true){if(!game)return;$('waveText').textContent=game.waveActive?`${game.wave}/${MAX_WAVES}`:`${Math.min(game.wave+1,MAX_WAVES)}/${MAX_WAVES}`;$('livesText').textContent=game.lives;$('coinsText').textContent=game.coins;$('scoreText').textContent=game.score;$('startWaveBtn').disabled=game.waveActive||game.gameOver||game.victory;$('startWaveBtn').textContent=game.waveActive?'Wave Running':game.wave>=MAX_WAVES?'Complete':'Start Wave';$('pauseBtn').textContent=game.paused?'Resume':'Pause';$('speedBtn').textContent=`${game.speed}x Speed`;if($('soundBtn'))$('soundBtn').textContent=audioMuted?'🔇 Sound':'🔊 Sound';updateAbilitiesUI();updateMissionsUI();updateToolButtons();updateQuickDockState();if(refresh)updateTowerButtonState();if(game.selectedTowerId)showTowerPanel();updateStatusText()}
 
   function showHowToPlay(){openModal(`<p class="eyebrow">How To Play</p><h2>Full EMX Tower Defense</h2><div class="guide-grid"><div class="guide-card"><h3>1. Pick a landscape</h3><p>Choose Neon Circuit, Frost Rift, Solar Dunes, or Void Core. Each map has a different path, vibe, bonus, and difficulty.</p></div><div class="guide-card"><h3>2. Build towers + tools</h3><p>Place towers off the path. Use Barrier Gates on the path, Boost Pads near towers, and Scrap Mode to remove field tools.</p></div><div class="guide-card"><h3>3. Upgrade to Level 5</h3><p>Tap any tower to upgrade. At level 3 it rolls a bonus mod: range, damage, or speed.</p></div><div class="guide-card"><h3>4. Use abilities</h3><p>EMP Freeze, Repair, Overdrive, EMX Mine, and Drone Swarm all have their own animations and sounds.</p></div><div class="guide-card"><h3>5. Survive bosses</h3><p>Boss waves happen every 5 waves. Beat wave 30 to save the EMX Core.</p></div></div>`)}
   function showTowerGuide(){const cards=Object.values(towerTypes).map(t=>`<div class="guide-card"><h3>${t.icon} ${t.name}</h3><p><strong>${t.cost} coins.</strong> ${t.desc} Range ${t.range}, damage ${t.damage}. Unique ${t.effect} attack sound/animation.</p></div>`).join('');openModal(`<p class="eyebrow">Tower Guide</p><h2>EMX Defense Towers</h2><div class="guide-grid">${cards}</div>`)}
   function showLevels(){const cards=Object.values(levels).map(l=>`<div class="guide-card"><h3>${l.icon} ${l.name}</h3><p>${l.desc}<br><strong>Start:</strong> ${l.startCoins} coins / ${l.lives} lives. <strong>Reward:</strong> ${Math.round(l.reward*100)}%.</p></div>`).join('');openModal(`<p class="eyebrow">Landscaped Levels</p><h2>Different Battlefields</h2><div class="guide-grid">${cards}</div>`)}
   function showWorkshop(){openModal(`<p class="eyebrow">Tools + Upgrades</p><h2>Full Upgrade System</h2><div class="guide-grid"><div class="guide-card"><h3>🛡️ Barrier Gate</h3><p>Costs 135. Place on the path. Creates a slow zone for enemies.</p></div><div class="guide-card"><h3>💠 Boost Pad</h3><p>Costs 170. Place off the path near towers to increase tower damage and fire rate.</p></div><div class="guide-card"><h3>⬆️ Tower Levels</h3><p>Towers now upgrade from L1 to L5. Level 3 adds a random Range, Damage, or Speed mod.</p></div><div class="guide-card"><h3>🔊 Sound pass</h3><p>Every click, placement, upgrade, tower attack, mine, drone, win, and lose event has its own sound file.</p></div></div>`)}
   function resetBest(){localStorage.removeItem(SAVE_KEY);loadBest();openModal('<h2>Best scores reset.</h2><p>Your EMX defense records were cleared.</p>')}
-  function togglePause(){unlockAudio();if(game.screen!=='game')return;game.paused=!game.paused;playSound('tap');updateUI()}function toggleSpeed(){unlockAudio();game.speed=game.speed===1?2:game.speed===2?3:1;playSound('tap');updateUI()}function goHome(){unlockAudio();saveProgress();game.running=false;game.paused=false;closeModal();showScreen('menu');playSound('tap')}
-  function wireEvents(){$('playBtn').onclick=()=>startNewGame(game.levelKey);$('howBtn').onclick=()=>{unlockAudio();playSound('tap');showHowToPlay()};$('towerGuideBtn').onclick=()=>{unlockAudio();playSound('tap');showTowerGuide()};$('levelsBtn').onclick=()=>{unlockAudio();playSound('tap');showLevels()};$('workshopBtn').onclick=()=>{unlockAudio();playSound('tap');showWorkshop()};$('resetBestBtn').onclick=()=>{unlockAudio();playSound('tap');resetBest()};$('startWaveBtn').onclick=startWave;$('pauseBtn').onclick=togglePause;$('speedBtn').onclick=toggleSpeed;$('homeBtn').onclick=goHome;$('empBtn').onclick=()=>useAbility('emp');$('repairBtn').onclick=()=>useAbility('repair');$('overdriveBtn').onclick=()=>useAbility('overdrive');$('mineBtn').onclick=()=>useAbility('mine');$('droneBtn').onclick=()=>useAbility('drone');$('barrierToolBtn').onclick=()=>{unlockAudio();playSound('tap');game.selectedTool=game.selectedTool==='barrier'?null:'barrier';game.selectedType=null;updateUI()};$('boostToolBtn').onclick=()=>{unlockAudio();playSound('tap');game.selectedTool=game.selectedTool==='boost'?null:'boost';game.selectedType=null;updateUI()};$('scrapToolBtn').onclick=()=>{unlockAudio();playSound('tap');game.selectedTool=game.selectedTool==='scrap'?null:'scrap';game.selectedType=null;updateUI()};$('upgradeTowerBtn').onclick=upgradeSelectedTower;$('sellTowerBtn').onclick=sellSelectedTower;$('closeTowerPanelBtn').onclick=()=>{game.selectedTowerId=null;$('towerPanel').classList.add('hidden');updateUI()};$('modalClose').onclick=closeModal;$('modal').onclick=(e)=>{if(e.target.id==='modal')closeModal()};canvas.addEventListener('pointerdown',onCanvasPointerDown,{passive:false});canvas.addEventListener('pointermove',onCanvasPointerMove,{passive:false});canvas.addEventListener('pointerup',onCanvasPointerUp,{passive:false});canvas.addEventListener('pointercancel',()=>{game.pointer.active=false});document.addEventListener('click',unlockAudio,{once:true})}
-  function init(){game=makeGame('neon');loadAudio();buildTowerButtons();buildLevelButtons();wireEvents();loadBest();setTimeout(()=>$('boot').classList.add('done'),1300);requestAnimationFrame(gameLoop)}
+  function togglePause(){unlockAudio();if(game.screen!=='game')return;game.paused=!game.paused;playSound('tap');updateUI()}function toggleSpeed(){unlockAudio();game.speed=game.speed===1?2:game.speed===2?3:1;playSound('tap');updateUI()}function toggleSound(){unlockAudio();audioMuted=!audioMuted;if(!audioMuted)playSound('tap',.22);updateUI()}function goHome(){unlockAudio();saveProgress();game.running=false;game.paused=false;closeModal();showScreen('menu');playSound('tap')}
+  function wireEvents(){$('playBtn').onclick=()=>startNewGame(game.levelKey);$('howBtn').onclick=()=>{unlockAudio();playSound('tap');showHowToPlay()};$('towerGuideBtn').onclick=()=>{unlockAudio();playSound('tap');showTowerGuide()};$('levelsBtn').onclick=()=>{unlockAudio();playSound('tap');showLevels()};$('workshopBtn').onclick=()=>{unlockAudio();playSound('tap');showWorkshop()};$('resetBestBtn').onclick=()=>{unlockAudio();playSound('tap');resetBest()};$('startWaveBtn').onclick=startWave;$('pauseBtn').onclick=togglePause;$('speedBtn').onclick=toggleSpeed;$('soundBtn').onclick=toggleSound;$('homeBtn').onclick=goHome;$('empBtn').onclick=()=>useAbility('emp');$('repairBtn').onclick=()=>useAbility('repair');$('overdriveBtn').onclick=()=>useAbility('overdrive');$('mineBtn').onclick=()=>useAbility('mine');$('droneBtn').onclick=()=>useAbility('drone');$('dockTowersTab').onclick=()=>{unlockAudio();playSound('tap');setDockMode('towers')};$('dockToolsTab').onclick=()=>{unlockAudio();playSound('tap');setDockMode('tools')};$('dockAbilitiesTab').onclick=()=>{unlockAudio();playSound('tap');setDockMode('abilities')};$('barrierToolBtn').onclick=()=>selectToolMode('barrier');$('boostToolBtn').onclick=()=>selectToolMode('boost');$('scrapToolBtn').onclick=()=>selectToolMode('scrap');$('upgradeTowerBtn').onclick=upgradeSelectedTower;$('sellTowerBtn').onclick=sellSelectedTower;$('closeTowerPanelBtn').onclick=()=>{game.selectedTowerId=null;$('towerPanel').classList.add('hidden');updateUI()};$('modalClose').onclick=closeModal;$('modal').onclick=(e)=>{if(e.target.id==='modal')closeModal()};canvas.addEventListener('pointerdown',onCanvasPointerDown,{passive:false});canvas.addEventListener('pointermove',onCanvasPointerMove,{passive:false});canvas.addEventListener('pointerup',onCanvasPointerUp,{passive:false});canvas.addEventListener('pointercancel',()=>{game.pointer.active=false});document.addEventListener('click',unlockAudio,{once:true})}
+  function init(){game=makeGame('neon');loadAudio();buildTowerButtons();buildLevelButtons();buildQuickDock();wireEvents();loadBest();setTimeout(()=>$('boot').classList.add('done'),1300);requestAnimationFrame(gameLoop)}
   init();
 })();

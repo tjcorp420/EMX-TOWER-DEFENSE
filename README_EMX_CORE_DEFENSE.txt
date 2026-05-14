@@ -1,21 +1,32 @@
-EMX CORE DEFENSE - FULL TOWER DEFENSE UPGRADE
+EMX CORE DEFENSE - LAYOUT + SOUND FIX UPGRADE
 
-Open index.html or deploy the full folder to Vercel/Netlify.
+WHAT CHANGED
+- Added a sticky Quick Battle Dock so towers/tools/abilities can be selected while the battlefield stays visible.
+- Added tabs: Towers, Tools, Abilities.
+- Made the mobile gameplay layout more compact.
+- Hid the huge lower shop/tool/ability panels on small phones because the Quick Dock replaces them.
+- Added a Sound button in the control row.
+- Rebuilt sound unlock logic for iPhone/PWA browsers.
+- Supports BOTH sound folder paths:
+  1. assets/sfx/tap.wav
+  2. sfx/tap.wav
+- Added generated fallback beeps if a WAV file fails to load, so clicks/attacks still make sound.
 
-V3 Full Upgrade Adds:
-- 4 landscaped levels: Neon Circuit, Frost Rift, Solar Dunes, Void Core.
-- Different paths, colors, scenery props, start coins, lives, rewards, and difficulty vibes per level.
-- 8 towers: Flame, Tesla, Cryo, Venom, Rocket, Shadow, Prism, Nova.
-- Tower upgrades now go to Level 5.
-- Level 3 gives a random tower mod: Range, Damage, or Speed.
-- Field tools: Barrier Gate, Boost Pad, Scrap Mode.
-- Commander abilities: EMP Freeze, Core Repair, Overdrive, EMX Mine, Drone Swarm.
-- New enemies: Regen Slime and Phase Ghost.
-- Boss waves every 5 waves, up to 30 waves.
-- Unique visual attack animations: beams, projectiles, pulses, nova blasts, rings, sparks, slow zones, boost zones.
-- Unique sound files for clicks, placement, upgrades, tower attacks, mine, drone, wins, and losses.
-- Updated Tower Guide, Landscaped Levels modal, Tools + Upgrades modal, and How To Play.
+IMPORTANT SOUND NOTE
+On iPhone, sound still requires the first real tap. Press Play Defense once, then the sound engine unlocks. Also make sure Silent Mode is off and volume is up.
 
-Folder placement:
-- Keep index.html, style.css, script.js, manifest.webmanifest, README in the root folder.
-- Keep all images and sounds inside /assets and /assets/sfx.
+FILES/FOLDERS
+Root:
+- index.html
+- style.css
+- script.js
+- manifest.webmanifest
+- README_EMX_CORE_DEFENSE.txt
+- sfx/  (fallback sound folder)
+
+Assets:
+- assets/emx-logo.png
+- assets/emx-banner.png
+- assets/emx-bg.png
+- assets/icons
+- assets/sfx/  (main sound folder)

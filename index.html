@@ -11,8 +11,8 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
   <link rel="icon" type="image/png" href="assets/favicon.png" />
-  <link rel="stylesheet" href="style.css?v=3" />
-  <script src="script.js?v=3" defer></script>
+  <link rel="stylesheet" href="style.css?v=4" />
+  <script src="script.js?v=4" defer></script>
 </head>
 <body>
   <div id="boot" class="boot">
@@ -66,11 +66,21 @@
         <div id="toast" class="toast hidden">Tap near the circuit path to defend.</div>
       </section>
 
+      <section class="battle-dock glass" aria-label="Quick build dock">
+        <div class="dock-head">
+          <button id="dockTowersTab" class="dock-tab active" type="button">🏗️ Towers</button>
+          <button id="dockToolsTab" class="dock-tab" type="button">🧰 Tools</button>
+          <button id="dockAbilitiesTab" class="dock-tab" type="button">⚡ Abilities</button>
+        </div>
+        <div id="quickDockGrid" class="quick-dock-grid"></div>
+      </section>
+
       <section class="controls glass">
         <div class="control-row">
           <button id="startWaveBtn" class="control primary">Start Wave</button>
           <button id="pauseBtn" class="control">Pause</button>
           <button id="speedBtn" class="control">1x Speed</button>
+          <button id="soundBtn" class="control">🔊 Sound</button>
           <button id="homeBtn" class="control danger">Home</button>
         </div>
         <p id="statusText" class="status-text">Pick a tower, then tap the map to place it.</p>
