@@ -239,3 +239,87 @@ h1, h2, h3, p { margin-top: 0; }
   .stat-row strong { font-size: .95rem; }
   .tower-panel { grid-template-columns: 1fr; }
 }
+
+/* =========================================================
+   V2 UPGRADE: ABILITIES, MISSIONS, POLISH
+========================================================= */
+.ability-panel, .mission-panel { margin-top: 14px; padding: 16px; }
+.ability-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.ability-btn {
+  min-height: 70px;
+  border-radius: 18px;
+  padding: 12px 8px;
+  font-weight: 900;
+  background: linear-gradient(135deg, rgba(114,255,21,.22), rgba(255,56,248,.16));
+  border: 1px solid rgba(255,255,255,.16);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 22px rgba(114,255,21,.08);
+}
+.ability-btn small { display: block; margin-top: 5px; color: var(--muted); font-size: .72rem; font-weight: 800; }
+.ability-btn.ready { outline: 2px solid rgba(168,255,36,.35); box-shadow: 0 0 28px rgba(168,255,36,.18); }
+.ability-btn:disabled { opacity: .5; }
+.mission-list { display: grid; gap: 8px; }
+.mission-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.07);
+  color: var(--muted);
+  font-weight: 800;
+}
+.mission-item strong { color: var(--text); }
+.mission-item.done { color: var(--lime); border: 1px solid rgba(168,255,36,.22); }
+.combo-pop {
+  color: var(--lime);
+  text-shadow: 0 0 16px rgba(168,255,36,.8);
+}
+@media (max-width: 560px) {
+  .ability-grid { grid-template-columns: 1fr; }
+  .ability-btn { min-height: 58px; }
+}
+
+/* =========================================================
+   V3 FULL EMX TOWER DEFENSE: LEVELS, TOOLS, UPGRADES
+========================================================= */
+.level-panel, .tool-panel { padding: 12px; margin-bottom: 10px; }
+.level-grid { display:grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
+.level-btn, .tool-btn {
+  min-height: 68px;
+  border-radius: 18px;
+  padding: 10px;
+  text-align: left;
+  border: 1px solid rgba(255,255,255,.15);
+  background: linear-gradient(135deg, rgba(36,39,72,.92), rgba(45,28,72,.92));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 10px 24px rgba(0,0,0,.2);
+}
+.level-btn strong, .tool-btn strong { display:block; font-weight: 900; }
+.level-btn small, .tool-btn small { display:block; color: var(--muted); margin-top: 4px; line-height: 1.25; }
+.level-btn.selected, .tool-btn.selected {
+  outline: 2px solid rgba(168,255,36,.75);
+  box-shadow: 0 0 28px rgba(168,255,36,.2), inset 0 0 20px rgba(168,255,36,.08);
+}
+.tool-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+.tool-btn { min-height: 62px; text-align:center; font-weight:900; }
+.tower-btn { position: relative; overflow: hidden; }
+.tower-btn::after, .level-btn::after, .tool-btn::after {
+  content:"";
+  position:absolute;
+  inset:-2px;
+  background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.18) 48%, transparent 55%);
+  transform: translateX(-120%);
+  transition: transform .55s ease;
+  pointer-events:none;
+}
+.tower-btn:hover::after, .level-btn:hover::after, .tool-btn:hover::after { transform: translateX(120%); }
+.ability-grid { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 560px) {
+  .level-grid { grid-template-columns: 1fr; }
+  .tool-grid { grid-template-columns: 1fr; }
+  .ability-grid { grid-template-columns: 1fr; }
+}
+@media (min-width: 680px) {
+  .level-grid { grid-template-columns: repeat(4, 1fr); }
+  .tool-grid { grid-template-columns: repeat(3, 1fr); }
+}

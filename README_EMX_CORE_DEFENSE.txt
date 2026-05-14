@@ -1,42 +1,21 @@
-EMX Core Defense v1
+EMX CORE DEFENSE - FULL TOWER DEFENSE UPGRADE
 
-File setup for SPCK / GitHub / Vercel:
+Open index.html or deploy the full folder to Vercel/Netlify.
 
-Put these files in your repo root, beside index.html:
-- index.html
-- style.css
-- script.js
-- manifest.webmanifest
-- README_EMX_CORE_DEFENSE.txt
-- assets/
+V3 Full Upgrade Adds:
+- 4 landscaped levels: Neon Circuit, Frost Rift, Solar Dunes, Void Core.
+- Different paths, colors, scenery props, start coins, lives, rewards, and difficulty vibes per level.
+- 8 towers: Flame, Tesla, Cryo, Venom, Rocket, Shadow, Prism, Nova.
+- Tower upgrades now go to Level 5.
+- Level 3 gives a random tower mod: Range, Damage, or Speed.
+- Field tools: Barrier Gate, Boost Pad, Scrap Mode.
+- Commander abilities: EMP Freeze, Core Repair, Overdrive, EMX Mine, Drone Swarm.
+- New enemies: Regen Slime and Phase Ghost.
+- Boss waves every 5 waves, up to 30 waves.
+- Unique visual attack animations: beams, projectiles, pulses, nova blasts, rings, sparks, slow zones, boost zones.
+- Unique sound files for clicks, placement, upgrades, tower attacks, mine, drone, wins, and losses.
+- Updated Tower Guide, Landscaped Levels modal, Tools + Upgrades modal, and How To Play.
 
-The assets folder must stay beside index.html:
-assets/
-  emx-logo.png
-  emx-banner.png
-  emx-bg.png
-  emx-splash.png
-  icon-192.png
-  icon-512.png
-  apple-touch-icon.png
-  favicon.png
-  sfx/
-    tap.wav
-    place.wav
-    shoot.wav
-    blast.wav
-    coin.wav
-    wave.wav
-    win.wav
-    lose.wav
-
-How to play:
-1. Tap Play Defense.
-2. Pick a tower from the shop.
-3. Tap the map away from the neon path to place it.
-4. Tap Start Wave.
-5. Tap placed towers to upgrade or sell them.
-6. Survive 20 waves. Boss waves happen every 5 waves.
-
-Do not put the entire emx_core_defense_v1 folder inside your repo unless Vercel root is set to that folder.
-Your repo root should have index.html directly visible.
+Folder placement:
+- Keep index.html, style.css, script.js, manifest.webmanifest, README in the root folder.
+- Keep all images and sounds inside /assets and /assets/sfx.

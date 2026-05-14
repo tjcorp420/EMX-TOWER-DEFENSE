@@ -11,8 +11,8 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
   <link rel="icon" type="image/png" href="assets/favicon.png" />
-  <link rel="stylesheet" href="style.css?v=1" />
-  <script src="script.js?v=1" defer></script>
+  <link rel="stylesheet" href="style.css?v=3" />
+  <script src="script.js?v=3" defer></script>
 </head>
 <body>
   <div id="boot" class="boot">
@@ -37,6 +37,8 @@
 
       <div class="menu-grid">
         <button id="playBtn" class="big-btn primary">▶ Play Defense</button>
+        <button id="levelsBtn" class="big-btn">🗺️ Landscaped Levels</button>
+        <button id="workshopBtn" class="big-btn">🧰 Tools + Upgrades</button>
         <button id="towerGuideBtn" class="big-btn">🏗️ Tower Guide</button>
         <button id="howBtn" class="big-btn">❔ How To Play</button>
         <button id="resetBestBtn" class="big-btn danger">🗑️ Reset Best</button>
@@ -54,6 +56,11 @@
         </div>
       </header>
 
+      <section class="level-panel glass">
+        <p class="eyebrow">Battlefield</p>
+        <div id="levelButtons" class="level-grid"></div>
+      </section>
+
       <section class="canvas-wrap glass">
         <canvas id="gameCanvas" width="900" height="1000" aria-label="EMX Core Defense Map"></canvas>
         <div id="toast" class="toast hidden">Tap near the circuit path to defend.</div>
@@ -67,6 +74,31 @@
           <button id="homeBtn" class="control danger">Home</button>
         </div>
         <p id="statusText" class="status-text">Pick a tower, then tap the map to place it.</p>
+      </section>
+
+      <section class="ability-panel glass">
+        <p class="eyebrow">Commander Abilities</p>
+        <div class="ability-grid">
+          <button id="empBtn" class="ability-btn">🧊 EMP Freeze <small id="empText">Ready</small></button>
+          <button id="repairBtn" class="ability-btn">💚 Core Repair <small id="repairText">Ready</small></button>
+          <button id="overdriveBtn" class="ability-btn">⚡ Overdrive <small id="overdriveText">Ready</small></button>
+          <button id="mineBtn" class="ability-btn">💣 EMX Mine <small id="mineText">Ready</small></button>
+          <button id="droneBtn" class="ability-btn">🛸 Drone Swarm <small id="droneText">Ready</small></button>
+        </div>
+      </section>
+
+      <section class="mission-panel glass">
+        <p class="eyebrow">Mission Feed</p>
+        <div id="missionList" class="mission-list"></div>
+      </section>
+
+      <section class="tool-panel glass">
+        <p class="eyebrow">Field Tools</p>
+        <div class="tool-grid">
+          <button id="barrierToolBtn" class="tool-btn">🛡️ Barrier Gate <small>Place a slow field on the path</small></button>
+          <button id="boostToolBtn" class="tool-btn">💠 Boost Pad <small>Buff nearby towers</small></button>
+          <button id="scrapToolBtn" class="tool-btn">♻️ Scrap Mode <small>Tap tool to remove it</small></button>
+        </div>
       </section>
 
       <section class="tower-shop glass">
