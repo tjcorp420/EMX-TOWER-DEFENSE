@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>EMX Tower Defense V6 Phase 3</title>
+  <title>EMX Tower Defense V7 Battles</title>
   <meta name="theme-color" content="#050509" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -11,14 +11,14 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
   <link rel="icon" type="image/png" href="assets/favicon.png" />
-  <link rel="stylesheet" href="style.css?v=60" />
-  <script src="script.js?v=60" defer></script>
+  <link rel="stylesheet" href="style.css?v=70" />
+  <script src="script.js?v=70" defer></script>
 </head>
 <body>
   <div id="boot" class="boot">
     <img src="assets/emx-logo.png" alt="EMX" class="boot-logo" />
-    <h1>EMX Tower Defense V6 Phase 3</h1>
-    <p>15-wave sprint pacing, shard economy, and reward screen initializing...</p>
+    <h1>EMX Tower Defense V7 Battles</h1>
+    <p>Battles mode, eco, send glitches, and boost systems initializing...</p>
     <div class="boot-bar"><span></span></div>
   </div>
 
@@ -28,7 +28,7 @@
         <img src="assets/emx-banner.png" alt="EMX" class="hero-banner" />
         <p class="eyebrow">Full EMX Tower Defense</p>
         <h1>Core Defense</h1>
-        <p class="subtitle">BTD-style layered glitches, pierce, AoE, chain lightning, status effects, 15-wave campaign sprints, 20-wave elite maps, meta upgrades, animated rewards, bosses, branches, and endless replay.</p>
+        <p class="subtitle">BTD-style layered glitches, pierce, AoE, chain lightning, status effects, 15-wave campaign sprints, 20-wave elite maps, meta upgrades, animated rewards, bosses, branches, and new EMX Battles bot mode with eco, enemy sends, and global boosts.</p>
         <div class="save-row four">
           <span>Best Wave <strong id="bestWaveText">0</strong></span>
           <span>Best Score <strong id="bestScoreText">0</strong></span>
@@ -39,6 +39,7 @@
       <div class="menu-grid">
         <button id="campaignBtn" class="big-btn primary">🗺️ Play Campaign</button>
         <button id="endlessBtn" class="big-btn">♾️ Endless Mode</button>
+        <button id="battleBtn" class="big-btn primary">⚔️ EMX Battles Bot</button>
         <button id="dailyBtn" class="big-btn">☀️ Daily Challenge</button>
         <button id="labBtn" class="big-btn">🧪 Spend Shards + Permanent Upgrades</button>
         <button id="achievementsBtn" class="big-btn">🏆 Achievements</button>
@@ -84,6 +85,12 @@
           <div><span>Coins</span><strong id="coinsText">350</strong></div>
           <div><span>Score</span><strong id="scoreText">0</strong></div>
         </div>
+        <div id="battleHud" class="battle-hud hidden">
+          <div><span>Your Eco</span><strong id="ecoText">250</strong></div>
+          <div><span>Eco Tick</span><strong id="ecoTimerText">6s</strong></div>
+          <div><span>Bot Core</span><strong id="opponentLivesText">25</strong></div>
+          <div><span>Pressure</span><strong id="opponentPressureText">0</strong></div>
+        </div>
         <div id="bossBar" class="boss-bar hidden"><span id="bossBarFill"></span><b id="bossBarText">Boss</b></div>
       </header>
 
@@ -97,6 +104,7 @@
           <button id="dockTowersTab" class="dock-tab active">🏗️ Towers</button>
           <button id="dockToolsTab" class="dock-tab">🧰 Tools</button>
           <button id="dockAbilitiesTab" class="dock-tab">⚡ Abilities</button>
+          <button id="dockSendTab" class="dock-tab">🧬 Send</button>
         </div>
         <div id="quickDockGrid" class="quick-dock-grid"></div>
       </section>
