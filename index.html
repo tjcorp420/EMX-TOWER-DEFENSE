@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>EMX Core Defense</title>
+  <meta name="theme-color" content="#050509" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="EMX Defense" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="stylesheet" href="style.css?v=1" />
+  <script src="script.js?v=1" defer></script>
+</head>
+<body>
+  <div id="boot" class="boot">
+    <img src="assets/emx-logo.png" alt="EMX" class="boot-logo" />
+    <h1>EMX Core Defense</h1>
+    <p>Loading neon defense grid...</p>
+    <div class="boot-bar"><span></span></div>
+  </div>
+
+  <main class="app">
+    <section id="menuScreen" class="screen menu-screen active">
+      <div class="hero-card glass">
+        <img src="assets/emx-banner.png" alt="EMX Core Defense" class="hero-banner" />
+        <p class="eyebrow">EMX Tower Defense</p>
+        <h1>Core Defense</h1>
+        <p class="subtitle">Build neon towers, stop glitch waves, defeat boss cores, and protect the EMX Core.</p>
+        <div class="save-row">
+          <span>Best Wave <strong id="bestWaveText">0</strong></span>
+          <span>Best Score <strong id="bestScoreText">0</strong></span>
+        </div>
+      </div>
+
+      <div class="menu-grid">
+        <button id="playBtn" class="big-btn primary">▶ Play Defense</button>
+        <button id="towerGuideBtn" class="big-btn">🏗️ Tower Guide</button>
+        <button id="howBtn" class="big-btn">❔ How To Play</button>
+        <button id="resetBestBtn" class="big-btn danger">🗑️ Reset Best</button>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen game-screen">
+      <header class="game-header glass">
+        <img src="assets/emx-banner.png" alt="EMX" />
+        <div class="stat-row">
+          <div><span>Wave</span><strong id="waveText">1/20</strong></div>
+          <div><span>Lives</span><strong id="livesText">20</strong></div>
+          <div><span>Coins</span><strong id="coinsText">350</strong></div>
+          <div><span>Score</span><strong id="scoreText">0</strong></div>
+        </div>
+      </header>
+
+      <section class="canvas-wrap glass">
+        <canvas id="gameCanvas" width="900" height="1000" aria-label="EMX Core Defense Map"></canvas>
+        <div id="toast" class="toast hidden">Tap near the circuit path to defend.</div>
+      </section>
+
+      <section class="controls glass">
+        <div class="control-row">
+          <button id="startWaveBtn" class="control primary">Start Wave</button>
+          <button id="pauseBtn" class="control">Pause</button>
+          <button id="speedBtn" class="control">1x Speed</button>
+          <button id="homeBtn" class="control danger">Home</button>
+        </div>
+        <p id="statusText" class="status-text">Pick a tower, then tap the map to place it.</p>
+      </section>
+
+      <section class="tower-shop glass">
+        <p class="eyebrow">Tower Shop</p>
+        <div id="towerButtons" class="tower-grid"></div>
+      </section>
+
+      <section id="towerPanel" class="tower-panel glass hidden">
+        <div>
+          <p class="eyebrow">Selected Tower</p>
+          <h2 id="selectedTowerName">Tower</h2>
+          <p id="selectedTowerStats">Stats</p>
+        </div>
+        <div class="panel-buttons">
+          <button id="upgradeTowerBtn" class="control primary">Upgrade</button>
+          <button id="sellTowerBtn" class="control">Sell</button>
+          <button id="closeTowerPanelBtn" class="control danger">Close</button>
+        </div>
+      </section>
+    </section>
+
+    <section id="modal" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="modal-card glass">
+        <button id="modalClose" class="x-btn" aria-label="Close">×</button>
+        <div id="modalBody"></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

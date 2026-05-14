@@ -1,0 +1,27 @@
+{
+  "name": "EMX Core Defense",
+  "short_name": "EMX Defense",
+  "description": "A neon EMX-branded tower defense game. Build towers and defend the EMX Core.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#050509",
+  "theme_color": "#050509",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
