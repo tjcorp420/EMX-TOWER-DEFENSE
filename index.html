@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>EMX Core Defense</title>
+  <title>EMX Core Defense V3</title>
   <meta name="theme-color" content="#050509" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -11,66 +11,92 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
   <link rel="icon" type="image/png" href="assets/favicon.png" />
-  <link rel="stylesheet" href="style.css?v=4" />
-  <script src="script.js?v=4" defer></script>
+  <link rel="stylesheet" href="style.css?v=30" />
+  <script src="script.js?v=30" defer></script>
 </head>
 <body>
   <div id="boot" class="boot">
     <img src="assets/emx-logo.png" alt="EMX" class="boot-logo" />
-    <h1>EMX Core Defense</h1>
-    <p>Loading neon defense grid...</p>
+    <h1>EMX Core Defense V3</h1>
+    <p>Campaign grid initializing...</p>
     <div class="boot-bar"><span></span></div>
   </div>
 
   <main class="app">
-    <section id="menuScreen" class="screen menu-screen active">
+    <section id="menuScreen" class="screen active">
       <div class="hero-card glass">
-        <img src="assets/emx-banner.png" alt="EMX Core Defense" class="hero-banner" />
-        <p class="eyebrow">EMX Tower Defense</p>
+        <img src="assets/emx-banner.png" alt="EMX" class="hero-banner" />
+        <p class="eyebrow">Full EMX Tower Defense</p>
         <h1>Core Defense</h1>
-        <p class="subtitle">Build neon towers, stop glitch waves, defeat boss cores, and protect the EMX Core.</p>
-        <div class="save-row">
+        <p class="subtitle">Campaign maps, upgrade lab, bosses, abilities, tower branches, achievements, and endless replay.</p>
+        <div class="save-row four">
           <span>Best Wave <strong id="bestWaveText">0</strong></span>
           <span>Best Score <strong id="bestScoreText">0</strong></span>
+          <span>Core Shards <strong id="shardText">0</strong></span>
+          <span>Stars <strong id="starsText">0</strong></span>
         </div>
       </div>
-
       <div class="menu-grid">
-        <button id="playBtn" class="big-btn primary">▶ Play Defense</button>
-        <button id="levelsBtn" class="big-btn">🗺️ Landscaped Levels</button>
-        <button id="workshopBtn" class="big-btn">🧰 Tools + Upgrades</button>
-        <button id="towerGuideBtn" class="big-btn">🏗️ Tower Guide</button>
-        <button id="howBtn" class="big-btn">❔ How To Play</button>
-        <button id="resetBestBtn" class="big-btn danger">🗑️ Reset Best</button>
+        <button id="campaignBtn" class="big-btn primary">🗺️ Play Campaign</button>
+        <button id="endlessBtn" class="big-btn">♾️ Endless Mode</button>
+        <button id="dailyBtn" class="big-btn">☀️ Daily Challenge</button>
+        <button id="labBtn" class="big-btn">🧪 Tower Lab + Permanent Upgrades</button>
+        <button id="achievementsBtn" class="big-btn">🏆 Achievements</button>
+        <button id="guideBtn" class="big-btn">📘 Tower + Enemy Guide</button>
+        <button id="settingsBtn" class="big-btn">⚙️ Settings</button>
       </div>
+    </section>
+
+    <section id="mapScreen" class="screen">
+      <div class="top-card glass compact-top">
+        <button class="mini-btn" data-go="menuScreen">← Menu</button>
+        <div><p class="eyebrow">Campaign Select</p><h2 id="mapTitle">Choose Your Battlefield</h2></div>
+      </div>
+      <div id="mapGrid" class="map-grid"></div>
+    </section>
+
+    <section id="labScreen" class="screen">
+      <div class="top-card glass compact-top">
+        <button class="mini-btn" data-go="menuScreen">← Menu</button>
+        <div><p class="eyebrow">Upgrade Lab</p><h2>Permanent EMX Progression</h2><p class="subtitle tiny">Spend Core Shards earned from battles. These upgrades carry into every run.</p></div>
+      </div>
+      <div id="labGrid" class="lab-grid"></div>
+    </section>
+
+    <section id="achievementScreen" class="screen">
+      <div class="top-card glass compact-top">
+        <button class="mini-btn" data-go="menuScreen">← Menu</button>
+        <div><p class="eyebrow">Achievements</p><h2>EMX Challenges</h2></div>
+      </div>
+      <div id="achievementGrid" class="achievement-grid"></div>
     </section>
 
     <section id="gameScreen" class="screen game-screen">
       <header class="game-header glass">
-        <img src="assets/emx-banner.png" alt="EMX" />
+        <div class="level-title-row">
+          <button id="gameMenuBtn" class="mini-btn">←</button>
+          <div><p class="eyebrow" id="levelNameText">EMX Core Grid</p><h2 id="modeText">Campaign</h2></div>
+          <button id="soundBtn" class="mini-btn">🔊</button>
+        </div>
         <div class="stat-row">
-          <div><span>Wave</span><strong id="waveText">1/20</strong></div>
-          <div><span>Lives</span><strong id="livesText">20</strong></div>
+          <div><span>Wave</span><strong id="waveText">1/30</strong></div>
+          <div><span>Lives</span><strong id="livesText">25</strong></div>
           <div><span>Coins</span><strong id="coinsText">350</strong></div>
           <div><span>Score</span><strong id="scoreText">0</strong></div>
         </div>
+        <div id="bossBar" class="boss-bar hidden"><span id="bossBarFill"></span><b id="bossBarText">Boss</b></div>
       </header>
-
-      <section class="level-panel glass">
-        <p class="eyebrow">Battlefield</p>
-        <div id="levelButtons" class="level-grid"></div>
-      </section>
 
       <section class="canvas-wrap glass">
         <canvas id="gameCanvas" width="900" height="1000" aria-label="EMX Core Defense Map"></canvas>
-        <div id="toast" class="toast hidden">Tap near the circuit path to defend.</div>
+        <div id="toast" class="toast hidden">Ready.</div>
       </section>
 
-      <section class="battle-dock glass" aria-label="Quick build dock">
+      <section class="battle-dock glass">
         <div class="dock-head">
-          <button id="dockTowersTab" class="dock-tab active" type="button">🏗️ Towers</button>
-          <button id="dockToolsTab" class="dock-tab" type="button">🧰 Tools</button>
-          <button id="dockAbilitiesTab" class="dock-tab" type="button">⚡ Abilities</button>
+          <button id="dockTowersTab" class="dock-tab active">🏗️ Towers</button>
+          <button id="dockToolsTab" class="dock-tab">🧰 Tools</button>
+          <button id="dockAbilitiesTab" class="dock-tab">⚡ Abilities</button>
         </div>
         <div id="quickDockGrid" class="quick-dock-grid"></div>
       </section>
@@ -80,53 +106,24 @@
           <button id="startWaveBtn" class="control primary">Start Wave</button>
           <button id="pauseBtn" class="control">Pause</button>
           <button id="speedBtn" class="control">1x Speed</button>
-          <button id="soundBtn" class="control">🔊 Sound</button>
           <button id="homeBtn" class="control danger">Home</button>
         </div>
-        <p id="statusText" class="status-text">Pick a tower, then tap the map to place it.</p>
+        <p id="statusText" class="status-text">Pick a tower, then tap the field.</p>
       </section>
 
-      <section class="ability-panel glass">
-        <p class="eyebrow">Commander Abilities</p>
-        <div class="ability-grid">
-          <button id="empBtn" class="ability-btn">🧊 EMP Freeze <small id="empText">Ready</small></button>
-          <button id="repairBtn" class="ability-btn">💚 Core Repair <small id="repairText">Ready</small></button>
-          <button id="overdriveBtn" class="ability-btn">⚡ Overdrive <small id="overdriveText">Ready</small></button>
-          <button id="mineBtn" class="ability-btn">💣 EMX Mine <small id="mineText">Ready</small></button>
-          <button id="droneBtn" class="ability-btn">🛸 Drone Swarm <small id="droneText">Ready</small></button>
+      <section id="towerPanel" class="tower-panel glass hidden">
+        <div><p class="eyebrow">Selected Tower</p><h2 id="selectedTowerName">Tower</h2><p id="selectedTowerStats">Stats</p></div>
+        <div class="panel-buttons">
+          <button id="upgradeTowerBtn" class="control primary">Upgrade</button>
+          <button id="branchTowerBtn" class="control">Branch</button>
+          <button id="sellTowerBtn" class="control">Sell</button>
+          <button id="closeTowerPanelBtn" class="control danger">Close</button>
         </div>
       </section>
 
       <section class="mission-panel glass">
         <p class="eyebrow">Mission Feed</p>
         <div id="missionList" class="mission-list"></div>
-      </section>
-
-      <section class="tool-panel glass">
-        <p class="eyebrow">Field Tools</p>
-        <div class="tool-grid">
-          <button id="barrierToolBtn" class="tool-btn">🛡️ Barrier Gate <small>Place a slow field on the path</small></button>
-          <button id="boostToolBtn" class="tool-btn">💠 Boost Pad <small>Buff nearby towers</small></button>
-          <button id="scrapToolBtn" class="tool-btn">♻️ Scrap Mode <small>Tap tool to remove it</small></button>
-        </div>
-      </section>
-
-      <section class="tower-shop glass">
-        <p class="eyebrow">Tower Shop</p>
-        <div id="towerButtons" class="tower-grid"></div>
-      </section>
-
-      <section id="towerPanel" class="tower-panel glass hidden">
-        <div>
-          <p class="eyebrow">Selected Tower</p>
-          <h2 id="selectedTowerName">Tower</h2>
-          <p id="selectedTowerStats">Stats</p>
-        </div>
-        <div class="panel-buttons">
-          <button id="upgradeTowerBtn" class="control primary">Upgrade</button>
-          <button id="sellTowerBtn" class="control">Sell</button>
-          <button id="closeTowerPanelBtn" class="control danger">Close</button>
-        </div>
       </section>
     </section>
 
