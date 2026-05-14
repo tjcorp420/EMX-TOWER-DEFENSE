@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>EMX Tower Defense V7 Battles</title>
+  <title>EMX Tower Defense V8 Prime Node</title>
   <meta name="theme-color" content="#050509" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -11,14 +11,14 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
   <link rel="icon" type="image/png" href="assets/favicon.png" />
-  <link rel="stylesheet" href="style.css?v=70" />
-  <script src="script.js?v=70" defer></script>
+  <link rel="stylesheet" href="style.css?v=80" />
+  <script src="script.js?v=80" defer></script>
 </head>
 <body>
   <div id="boot" class="boot">
     <img src="assets/emx-logo.png" alt="EMX" class="boot-logo" />
-    <h1>EMX Tower Defense V7 Battles</h1>
-    <p>Battles mode, eco, send glitches, and boost systems initializing...</p>
+    <h1>EMX Tower Defense V8 Prime Node</h1>
+    <p>Prime Node, Phantom/Armored glitches, dynamic maps, and Motherboard upgrades initializing...</p>
     <div class="boot-bar"><span></span></div>
   </div>
 
@@ -28,7 +28,7 @@
         <img src="assets/emx-banner.png" alt="EMX" class="hero-banner" />
         <p class="eyebrow">Full EMX Tower Defense</p>
         <h1>Core Defense</h1>
-        <p class="subtitle">BTD-style layered glitches, pierce, AoE, chain lightning, status effects, 15-wave campaign sprints, 20-wave elite maps, meta upgrades, animated rewards, bosses, branches, and new EMX Battles bot mode with eco, enemy sends, and global boosts.</p>
+        <p class="subtitle">Offline single-player BTD-style strategy with layered glitches, Phantom/Armored immunities, Prime Node hero tower, overclock tiles, decryptable firewalls, bosses, branches, and a neon EMX Motherboard skill tree.</p>
         <div class="save-row four">
           <span>Best Wave <strong id="bestWaveText">0</strong></span>
           <span>Best Score <strong id="bestScoreText">0</strong></span>
@@ -39,9 +39,9 @@
       <div class="menu-grid">
         <button id="campaignBtn" class="big-btn primary">🗺️ Play Campaign</button>
         <button id="endlessBtn" class="big-btn">♾️ Endless Mode</button>
-        <button id="battleBtn" class="big-btn primary">⚔️ EMX Battles Bot</button>
+        <button id="battleBtn" class="big-btn primary">🧠 Prime Node Challenge</button>
         <button id="dailyBtn" class="big-btn">☀️ Daily Challenge</button>
-        <button id="labBtn" class="big-btn">🧪 Spend Shards + Permanent Upgrades</button>
+        <button id="labBtn" class="big-btn">🧩 EMX Motherboard Skill Tree</button>
         <button id="achievementsBtn" class="big-btn">🏆 Achievements</button>
         <button id="guideBtn" class="big-btn">📘 Tower + Enemy Guide</button>
         <button id="settingsBtn" class="big-btn">⚙️ Settings</button>
@@ -59,7 +59,7 @@
     <section id="labScreen" class="screen">
       <div class="top-card glass compact-top">
         <button class="mini-btn" data-go="menuScreen">← Menu</button>
-        <div><p class="eyebrow">Upgrade Lab</p><h2>Permanent EMX Progression</h2><p class="subtitle tiny">Spend Core Shards earned from battles. These upgrades carry into every run.</p></div>
+        <div><p class="eyebrow">EMX Motherboard</p><h2>Permanent Offline Skill Tree</h2><p class="subtitle tiny">Spend Core Shards to slot upgrades into a neon PC motherboard. These upgrades carry into every single-player run.</p></div>
       </div>
       <div id="labGrid" class="lab-grid"></div>
     </section>
@@ -104,7 +104,7 @@
           <button id="dockTowersTab" class="dock-tab active">🏗️ Towers</button>
           <button id="dockToolsTab" class="dock-tab">🧰 Tools</button>
           <button id="dockAbilitiesTab" class="dock-tab">⚡ Abilities</button>
-          <button id="dockSendTab" class="dock-tab">🧬 Send</button>
+          <button id="dockSendTab" class="dock-tab">🧠 Prime</button>
         </div>
         <div id="quickDockGrid" class="quick-dock-grid"></div>
       </section>

@@ -4,13 +4,13 @@
   const canvas = $('gameCanvas');
   const ctx = canvas.getContext('2d');
   const W = 900, H = 1000;
-  const saveKey = 'emxCoreDefenseV3Save';
+  const saveKey = 'emxCoreDefenseV3Save'; // keep same key so existing EMX progress carries forward
   const rand = (a,b)=>a+Math.random()*(b-a);
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const choice=(arr)=>arr[Math.floor(Math.random()*arr.length)];
   const todaySeed = () => new Date().toISOString().slice(0,10).replaceAll('-','');
 
-  const baseSave = {bestWave:0,bestScore:0,shards:0,stars:{grid:0,forest:0,desert:0,storm:0,lab:0,reactor:0}, lab:{coins:0,rate:0,lives:0,cooldown:0,cache:0,crit:0}, meta:{coins:0,damage:0,rate:0,lives:0,cooldown:0,economy:0,cache:0,crit:0,shards:0}, achievements:{}, settings:{sound:true,music:true,vibrate:true,reduced:false}};
+  const baseSave = {bestWave:0,bestScore:0,shards:0,stars:{grid:0,forest:0,desert:0,storm:0,lab:0,reactor:0}, lab:{coins:0,rate:0,lives:0,cooldown:0,cache:0,crit:0}, meta:{coins:0,damage:0,rate:0,lives:0,cooldown:0,economy:0,cache:0,crit:0,shards:0,scanner:0,armor:0,prime:0,firewall:0,overclock:0}, achievements:{}, settings:{sound:true,music:true,vibrate:true,reduced:false}};
   let save = loadSave();
 
   const LEVELS = [
@@ -22,6 +22,22 @@
     {key:'reactor', name:'Final Core Reactor', desc:'Elite 20-wave double entrance finale with compressed difficulty and the Final Glitch King.', unlock:16, lives:28, coins:585, waves:20, color:'#a84cff', bg:'reactor', mods:['20 elite waves','Double entrance','Final boss'], path:[[75,145],[800,145],[800,300],[115,300],[115,500],[815,500],[815,690],[155,690],[155,875],[795,875]], altPath:[[75,245],[310,245],[310,410],[805,410],[805,600],[435,600],[435,765],[795,765]], enemies:['layer3','fast','camo','flyer','shielded','tank','healer','emp','splitter']}
   ];
 
+  const DYNAMIC_MAPS = {
+    grid:{overclockTiles:[{x:230,y:205,w:120,h:82,label:'OC RAM'},{x:610,y:610,w:126,h:86,label:'GPU TILE'}],firewalls:[{x:360,y:360,w:92,h:70,cost:180,label:'DATA LOCK'},{x:665,y:790,w:95,h:68,cost:220,label:'FIREWALL'}]},
+    forest:{overclockTiles:[{x:250,y:500,w:125,h:88,label:'CANOPY OC'},{x:640,y:430,w:126,h:92,label:'HUB BOOST'}],firewalls:[{x:595,y:245,w:95,h:70,cost:190,label:'ROOT LOCK'},{x:235,y:650,w:90,h:74,cost:210,label:'VINE WALL'}]},
+    desert:{overclockTiles:[{x:295,y:250,w:125,h:86,label:'SOLAR OC'},{x:565,y:620,w:132,h:88,label:'HEAT BOOST'}],firewalls:[{x:525,y:455,w:94,h:76,cost:205,label:'SAND LOCK'},{x:300,y:790,w:88,h:70,cost:235,label:'MIRAGE'}]},
+    storm:{overclockTiles:[{x:245,y:380,w:124,h:86,label:'STORM OC'},{x:605,y:185,w:132,h:82,label:'PRISM TILE'}],firewalls:[{x:485,y:540,w:96,h:72,cost:215,label:'STATIC WALL'},{x:680,y:720,w:92,h:68,cost:250,label:'PHANTOM BLOCK'}]},
+    lab:{overclockTiles:[{x:180,y:265,w:120,h:86,label:'CPU OC'},{x:610,y:495,w:130,h:88,label:'TEST PAD'},{x:430,y:815,w:128,h:78,label:'RAM SLOT'}],firewalls:[{x:590,y:315,w:96,h:74,cost:230,label:'LAB LOCK'},{x:360,y:650,w:96,h:76,cost:260,label:'DATA BLOCK'},{x:710,y:805,w:86,h:72,cost:300,label:'CORE GATE'}]},
+    reactor:{overclockTiles:[{x:455,y:215,w:128,h:86,label:'REACTOR OC'},{x:565,y:210,w:132,h:90,label:'VOLT TILE'},{x:265,y:780,w:120,h:82,label:'PRIME PAD'}],firewalls:[{x:505,y:345,w:98,h:78,cost:260,label:'REACTOR WALL'},{x:205,y:560,w:92,h:74,cost:290,label:'GLITCH LOCK'},{x:695,y:790,w:90,h:72,cost:330,label:'FINAL GATE'}]}
+  };
+  LEVELS.forEach(level=>{
+    const dyn=DYNAMIC_MAPS[level.key]||DYNAMIC_MAPS.grid;
+    level.overclockTiles=dyn.overclockTiles;
+    level.firewalls=dyn.firewalls;
+    level.enemies=Array.from(new Set([...(level.enemies||[]),'phantom','armored','phantomArmored']));
+  });
+
+
   const TOWERS = {
     flame:{icon:'🔥',name:'Flame Turret',cost:90,color:'#ff6b2c',hit:'burn',role:'damage',desc:'Burns enemies over time.',branchA:['Inferno Beam','Longer burn, better boss DPS'],branchB:['Napalm Burst','Splash fire explosions'],sfx:'flame'},
     tesla:{icon:'⚡',name:'Tesla Coil',cost:125,color:'#55d7ff',hit:'zap',role:'damage',desc:'Chains electric damage.',branchA:['Chain Storm','More chain jumps'],branchB:['EMP Tesla','Slows and stuns'],sfx:'zap'},
@@ -31,7 +47,8 @@
     shadow:{icon:'🌑',name:'Shadow Sniper',cost:180,color:'#b36cff',hit:'pierce',role:'damage',desc:'Long range boss damage and natural camo detection.',branchA:['Void Rail','Pierce armor'],branchB:['Phantom Crit','High crit chance'],sfx:'shadow'},
     anti:{icon:'🎯',name:'Anti-Air Prism',cost:135,color:'#ffffff',hit:'laser',role:'damage',desc:'Best against flying drones.',branchA:['Sky Net','Huge anti-air range'],branchB:['Prism Scanner','Hits ground and reveals camo'],sfx:'laser'},
     hub:{icon:'💠',name:'EMX Hub',cost:160,color:'#55d7ff',hit:'support',role:'support',desc:'Support node that buffs nearby towers.',branchA:['Overclock Aura','Bigger aura and stronger attack-speed buff'],branchB:['Scanner Hub','Reveals camo and boosts nearby range'],sfx:'upgrade'},
-    miner:{icon:'💰',name:'Crypto Miner',cost:145,color:'#ffd65a',hit:'economy',role:'economy',desc:'Economy node that generates coins after each wave.',branchA:['Yield Farm','More coins per wave'],branchB:['Shard Rig','Small chance to mine Core Shards'],sfx:'coin'}
+    miner:{icon:'💰',name:'Crypto Miner',cost:145,color:'#ffd65a',hit:'economy',role:'economy',desc:'Economy node that generates coins after each wave.',branchA:['Yield Farm','More coins per wave'],branchB:['Shard Rig','Small chance to mine Core Shards'],sfx:'coin'},
+    prime:{icon:'🧠',name:'Prime Node',cost:275,color:'#b026ff',hit:'prime',role:'prime',desc:'One-per-match hero node. Levels up from wave XP instead of coin upgrades.',branchA:['Nova Core','Auto-unlocked at Prime Level 3'],branchB:['Annihilation Core','Auto-unlocked at Prime Level 10'],sfx:'laser',canSeePhantom:true}
   };
   const ENEMIES = {
     layer1:{name:'Neon Blue Layer',hp:34,speed:76,reward:7,color:'#55d7ff',score:28,layer:1},
@@ -44,7 +61,10 @@
     shield:{name:'Shield Core',hp:130,speed:48,reward:26,color:'#55d7ff',armor:6,score:100}, swarm:{name:'Swarm Bug',hp:25,speed:82,reward:8,color:'#baffff',score:32},
     flyer:{name:'Flying Drone',hp:85,speed:72,reward:28,color:'#ffffff',flying:true,score:130}, tank:{name:'Tank Core',hp:260,speed:32,reward:42,color:'#ffd65a',armor:4,score:190},
     healer:{name:'Healer Unit',hp:120,speed:45,reward:35,color:'#72ff15',healer:true,score:150}, emp:{name:'EMP Warden',hp:150,speed:50,reward:38,color:'#a84cff',emp:true,score:165}, splitter:{name:'Splitter Core',hp:125,speed:55,reward:32,color:'#ff8d38',split:true,score:150},
-    boss:{name:'Boss Core',hp:900,speed:31,reward:140,color:'#ff4f7a',armor:8,boss:true,score:900}, final:{name:'Final Glitch King',hp:2200,speed:27,reward:300,color:'#ff38f8',armor:10,boss:true,healer:true,emp:true,score:2500}
+    phantom:{name:'Phantom Glitch',hp:92,speed:76,reward:38,color:'#cbb7ff',score:170,camo:true,isPhantom:true},
+    armored:{name:'Armored Glitch',hp:185,speed:42,reward:46,color:'#d7d7d7',score:210,armor:999,isArmored:true,armored:true},
+    phantomArmored:{name:'Phantom Armor Core',hp:235,speed:38,reward:68,color:'#e8d7ff',score:330,camo:true,isPhantom:true,armor:999,isArmored:true,armored:true},
+    boss:{name:'Boss Core',hp:900,speed:31,reward:140,color:'#ff4f7a',armor:8,isArmored:true,boss:true,score:900}, final:{name:'Final Glitch King',hp:2200,speed:27,reward:300,color:'#ff38f8',armor:10,isArmored:true,boss:true,healer:true,emp:true,score:2500}
   };
   const META_UPGRADES = [
     {key:'coins',name:'Startup Cache',desc:'+50 starting coins per rank. Helps players reach upgraded towers within 15 waves.',cost:[2,4,7,11,16]},
@@ -55,7 +75,12 @@
     {key:'economy',name:'Reward Multiplier',desc:'+8% coin rewards and miner income per rank.',cost:[3,6,10,15,22]},
     {key:'cache',name:'Cache Magnet',desc:'Bonus caches appear more often during active waves.',cost:[2,5,9,13,18]},
     {key:'crit',name:'Critical Firmware',desc:'+3% tower crit chance per rank.',cost:[3,6,10,15,22]},
-    {key:'shards',name:'Shard Amplifier',desc:'+12% post-game Core Shard rewards per rank.',cost:[4,7,12,18,25]}
+    {key:'shards',name:'Shard Amplifier',desc:'+12% post-game Core Shard rewards per rank.',cost:[4,7,12,18,25]},
+    {key:'scanner',name:'Phantom Scanner BIOS',desc:'Scanner support unlocks earlier and high-level towers gain better Phantom detection.',cost:[3,6,10,15,22]},
+    {key:'armor',name:'Armor-Pierce Driver',desc:'Standard hits chip Armored glitches harder instead of bouncing completely.',cost:[4,8,13,19,27]},
+    {key:'prime',name:'Prime Node Accelerator',desc:'+12% Prime Node XP gain per rank so hero abilities unlock sooner.',cost:[4,8,14,20,28]},
+    {key:'firewall',name:'Decrypt Toolkit',desc:'Reduces Firewall decrypt costs by 8% per rank.',cost:[2,5,9,14,20]},
+    {key:'overclock',name:'Overclock Tile Tuning',desc:'Overclock tiles give stronger attack-speed bonuses per rank.',cost:[3,6,10,15,22]}
   ];
   const LAB = META_UPGRADES;
   const ACH = [
@@ -69,6 +94,10 @@
   const ABILITY_META = {
     emp:{name:'🧊 EMP Freeze',cd:28}, repair:{name:'💚 Repair',cd:38}, overdrive:{name:'⚡ Overdrive',cd:33},
     mine:{name:'💣 Mine',cd:14}, drone:{name:'🛸 Drone',cd:30}, pulse:{name:'💥 Core Pulse',cd:42}
+  };
+  const PRIME_ABILITIES = {
+    novaScan:{name:'🟣 Nova Scan',cd:24,level:3,desc:'Reveals Phantom glitches and stuns the map.'},
+    annihilation:{name:'💥 Annihilation Core',cd:68,level:10,desc:'Massive full-map energy burst.'}
   };
 
 
@@ -128,6 +157,9 @@
       if(wave>=4&&levelPool.includes('camo')&&(wave===8||wave===12||wave%4===0))groups.push({type:'camo',count:mobile?2:3,spacing:.60});
       if(wave>=6&&levelPool.includes('flyer')&&(wave===9||wave%3===0))groups.push({type:'flyer',count:mobile?2:4,spacing:.58});
       if(wave>=8&&levelPool.includes('healer')&&(wave%4===1||wave>=14))groups.push({type:'healer',count:mobile?1:2,spacing:.92});
+      if(wave>=6&&(wave===6||wave%5===1))groups.push({type:'armored',count:mobile?1:2,spacing:.76});
+      if(wave>=7&&(wave===7||wave%4===3))groups.push({type:'phantom',count:mobile?2:3,spacing:.58});
+      if(wave>=13&&(wave%5===3||wave>=this.maxWaves-1))groups.push({type:'phantomArmored',count:mobile?1:2,spacing:.86});
       const finalWave=this.maxWaves!==999&&wave>=this.maxWaves;
       const bossWave=finalWave || wave%5===0;
       if(bossWave)groups.push({type:finalWave?'final':'boss',count:1,spacing:.95});
@@ -184,7 +216,7 @@
 
   $('campaignBtn').onclick=()=>{playSound('tap'); showScreen('mapScreen');};
   $('endlessBtn').onclick=()=>{playSound('tap'); startGame('grid','Endless');};
-  $('battleBtn').onclick=()=>{playSound('tap'); startGame('storm','Battles Bot');};
+  $('battleBtn').onclick=()=>{playSound('tap'); startGame('lab','Prime Challenge');};
   $('dailyBtn').onclick=()=>{playSound('tap'); const idx=Number(todaySeed())%LEVELS.length; startGame(LEVELS[idx].key,'Daily Challenge');};
   $('labBtn').onclick=()=>{playSound('tap'); showScreen('labScreen');};
   $('achievementsBtn').onclick=()=>{playSound('tap'); showScreen('achievementScreen');};
@@ -196,11 +228,15 @@
 
   function renderMaps(){const grid=$('mapGrid');grid.innerHTML='';LEVELS.forEach((l,i)=>{const stars=save.stars[l.key]||0;const isOpen=unlocked(l);const card=document.createElement('div');card.className='map-card glass';card.innerHTML=`<div class="card-row"><h3>${isOpen?'':'🔒 '}${l.name}</h3><span class="tag">${'⭐'.repeat(stars)||'No stars'}</span></div><p>${l.desc}</p><div class="tag-row">${l.mods.map(m=>`<span class="tag">${m}</span>`).join('')}<span class="tag">${l.waves} waves</span></div><br><button class="big-btn ${isOpen?'primary':''}" ${isOpen?'':'disabled'}>${isOpen?'Play Level':`Need ${l.unlock} stars`}</button>`;card.querySelector('button').onclick=()=>startGame(l.key,'Campaign');grid.appendChild(card);});}
   function renderLab(){
-    const grid=$('labGrid');grid.innerHTML='';
-    LAB.forEach(item=>{
-      const r=metaRank(item.key);const next=item.cost[r];
-      const card=document.createElement('div');card.className='lab-card glass';
-      card.innerHTML=`<h3>${item.name} <span class="tag">Rank ${r}/5</span></h3><p>${item.desc}</p><div class="meta-progress"><i style="width:${Math.round(r/5*100)}%"></i></div><div class="card-row"><span class="tag">Core Shards: ${save.shards}</span><button class="big-btn primary" ${next===undefined||save.shards<next?'disabled':''}>${next===undefined?'MAX':`Upgrade ${next} shards`}</button></div>`;
+    const grid=$('labGrid');
+    grid.className='lab-grid motherboard-tree';
+    grid.innerHTML=`<div class="motherboard-hero glass"><p class="eyebrow">Core Shards: ${save.shards||0}</p><h2>EMX Motherboard</h2><p>Slot permanent firmware upgrades into your offline build. Green nodes are ready to upgrade, purple traces show your EMX progression path.</p></div>`;
+    LAB.forEach((item,i)=>{
+      const r=metaRank(item.key), next=item.cost[r];
+      const ready=next!==undefined&&save.shards>=next;
+      const card=document.createElement('div');
+      card.className=`lab-card motherboard-node node-${i%6} ${ready?'ready':''} ${next===undefined?'maxed':''}`;
+      card.innerHTML=`<span class="board-pin"></span><h3>${item.name} <span class="tag">Rank ${r}/5</span></h3><p>${item.desc}</p><div class="meta-progress"><i style="width:${Math.round(r/5*100)}%"></i></div><div class="card-row"><span class="tag">${next===undefined?'MAXED':`${next} shards`}</span><button class="big-btn ${ready?'primary':''}" ${next===undefined||!ready?'disabled':''}>${next===undefined?'Installed':`Install`}</button></div>`;
       card.querySelector('button').onclick=()=>{if(buyMetaUpgrade(item))renderLab();};
       grid.appendChild(card);
     });
@@ -216,8 +252,9 @@
       mode,levelKey,level,wave:1,maxWaves:mode==='Endless'?999:level.waves,
       lives:level.lives+labLives,coins:level.coins+labCoins,score:0,kills:0,bossKills:0,
       towers:[],enemies:[],projectiles:[],effects:[],floating:[],tools:[],crates:[],
+      firewalls:(level.firewalls||[]).map((f,i)=>Object.assign({id:i+1,decrypted:false},f)),overclockTiles:(level.overclockTiles||[]),
       spawnQueue:[],spawnTimer:0,wavePlan:null,waveActive:false,paused:false,speed:1,
-      selectedType:null,selectedTool:null,selectedTowerId:null,
+      selectedType:null,selectedTool:null,selectedTowerId:null,primeCooldowns:{novaScan:0,annihilation:0},
       nextEnemyId:1,nextTowerId:1,nextProjectileId:1,nextToolId:1,
       abilities:{emp:0,repair:0,overdrive:0,mine:0,drone:0,pulse:0},
       overdrive:0,perfect:true,combo:0,comboTimer:0,cacheTimer:8,shake:0,uiTimer:0,
@@ -231,9 +268,9 @@
       game.lives=30+labLives;
       game.coins=650+labCoins;
       game.battle=createBattleState();
-      game.message='Battles mode: defend your core, build eco, send glitches, and knock out the bot core.';
+      game.message='Battles mode ready: build towers first, then press Start Battle. Bot sends and eco ticks stay paused until you start.';
     }
-    dockTab=mode==='Battles Bot'?'send':'towers'; staticKey=''; showScreen('gameScreen');
+    dockTab='towers'; staticKey=''; showScreen('gameScreen');
     $('levelNameText').textContent=level.name; $('modeText').textContent=mode;
     renderDock(); updateUI();
   }
@@ -273,23 +310,22 @@
         b.onclick=()=>useAbility(k);
         grid.appendChild(b);
       });
+      renderPrimeAbilityDock(grid);
     }
     if(dockTab==='send'){
       if(!game.battle || !game.battle.active){
-        const info=document.createElement('div');
-        info.className='battle-log';
-        info.textContent='Send Glitches unlocks inside EMX Battles Bot mode.';
-        grid.appendChild(info);
+        renderPrimeDock(grid);
         return;
       }
+      const roundLive=!!game.waveActive;
       const boosts=document.createElement('div');
       boosts.className='battle-boosts';
       boosts.innerHTML=`<button class="battle-boost" id="towerBoostBtn"><strong>⚡ Tower Overdrive</strong><span>${game.battle.boosts.tower} uses • ${Math.ceil(game.battle.towerBoostTimer||0)}s active</span></button><button class="battle-boost" id="surgeBoostBtn"><strong>🧬 Glitch Surge</strong><span>${game.battle.boosts.surge} uses • ${Math.ceil(game.battle.glitchSurgeTimer||0)}s active</span></button>`;
       grid.appendChild(boosts);
       setTimeout(()=>{
         const tb=$('towerBoostBtn'), gb=$('surgeBoostBtn');
-        if(tb){tb.disabled=game.battle.boosts.tower<=0||game.battle.towerBoostTimer>0;tb.onclick=()=>useBattleBoost('tower')}
-        if(gb){gb.disabled=game.battle.boosts.surge<=0||game.battle.glitchSurgeTimer>0;gb.onclick=()=>useBattleBoost('surge')}
+        if(tb){tb.disabled=!roundLive||game.battle.boosts.tower<=0||game.battle.towerBoostTimer>0;tb.onclick=()=>useBattleBoost('tower')}
+        if(gb){gb.disabled=!roundLive||game.battle.boosts.surge<=0||game.battle.glitchSurgeTimer>0;gb.onclick=()=>useBattleBoost('surge')}
       });
       SEND_GLITCHES.forEach(item=>{
         const cd=Math.max(0,game.battle.sendCooldowns[item.key]||0);
@@ -297,13 +333,13 @@
         const b=dockButton(`${item.icon} ${item.name}`,`${item.cost} coins • ${item.desc}`,false,`send-item ${item.eco>=0?'eco-up':'eco-down'}`);
         b.style.setProperty('--cool', ratio.toFixed(2));
         b.insertAdjacentHTML('afterbegin',`<i class="cooldown-sweep"></i><b class="eco-tag">${item.eco>=0?'+':''}${item.eco} eco</b>`);
-        b.disabled=cd>0||game.coins<item.cost;
+        b.disabled=!roundLive||cd>0||game.coins<item.cost;
         b.onclick=()=>sendGlitch(item.key);
         grid.appendChild(b);
       });
       const log=document.createElement('div');
       log.className='battle-log';
-      log.textContent=game.battle.log[0]||'Build eco with cheap sends, then punish with camo/shield/tank sends.';
+      log.textContent=!roundLive?'Build/upgrade first, then press Start Battle. Sends and bot attacks stay paused until the round starts.':(game.battle.log[0]||'Build eco with cheap sends, then punish with camo/shield/tank sends.');
       grid.appendChild(log);
     }
   }
@@ -313,12 +349,47 @@
     b.innerHTML=`<span class="dock-label">${name}</span><span>${sub}</span>`;
     return b;
   }
+  function primeNode(){return game?.towers.find(t=>t.type==='prime')||null;}
+  function primeLevel(t=primeNode()){return t?(t.primeLevel||t.level||1):0;}
+  function primeNextXp(level){return Math.round(80 + level*55 + Math.max(0,level-5)*25);}
+  function renderPrimeDock(grid){
+    const prime=primeNode();
+    if(!prime){
+      const item=TOWERS.prime;
+      const b=dockButton(`${item.icon} ${item.name}`,`${item.cost} coins • one hero per match`,game.selectedType==='prime','prime-card');
+      b.onclick=()=>{game.selectedType='prime';game.selectedTool=null;game.message='Place your one Prime Node hero tower. It levels from wave XP.';updateUI();playSound('tap')};
+      grid.appendChild(b);
+      const info=document.createElement('div');info.className='battle-log prime-log';info.textContent='Prime Node is your offline hero tower. It auto-levels after waves and unlocks Nova Scan at L3 plus Annihilation Core at L10.';grid.appendChild(info);
+      return;
+    }
+    const lvl=primeLevel(prime), next=primeNextXp(lvl), pct=clamp((prime.xp||0)/next*100,0,100);
+    const card=document.createElement('div');card.className='battle-log prime-log';
+    card.innerHTML=`<strong>🧠 Prime Node L${lvl}</strong><span> XP ${Math.floor(prime.xp||0)}/${next} • ${lvl>=2?'Phantom detection online':'Level 2 unlocks detection'} • ${prime.overclocked?'Overclock tile boosted':''}</span><div class="meta-progress"><i style="width:${pct}%"></i></div>`;
+    grid.appendChild(card);
+    renderPrimeAbilityDock(grid);
+  }
+  function renderPrimeAbilityDock(grid){
+    const prime=primeNode();
+    Object.entries(PRIME_ABILITIES).forEach(([key,m])=>{
+      const lvl=primeLevel(prime), cd=Math.max(0,game.primeCooldowns?.[key]||0);
+      const unlocked=!!prime&&lvl>=m.level;
+      const pct=clamp((1-cd/m.cd)*100,0,100);
+      const b=dockButton(m.name,unlocked?(cd>0?`${Math.ceil(cd)}s • ${m.desc}`:`Ready • ${m.desc}`):`Prime L${m.level} required`,false,'ability-item prime-ability'+(unlocked&&cd<=0?' ready':''));
+      b.style.setProperty('--p', pct.toFixed(0));
+      b.insertAdjacentHTML('afterbegin','<i class="cool-ring"></i>');
+      b.disabled=!unlocked||cd>0;
+      b.onclick=()=>usePrimeAbility(key);
+      grid.appendChild(b);
+    });
+  }
 
 
 
   function createBattleState(){
     return {
       active:true,
+      matchStarted:false,
+      roundActive:false,
       playerEco:250,
       opponentEco:250,
       ecoTimer:6,
@@ -335,7 +406,7 @@
       towerBoostTimer:0,
       glitchSurgeTimer:0,
       surgeMultiplier:1,
-      log:['Battles started — send cheap glitches to build eco.']
+      log:['Build towers first, then press Start Battle.']
     };
   }
   function battleLog(msg){
@@ -347,14 +418,29 @@
   function updateBattle(dt){
     const b=game?.battle;
     if(!b||!b.active)return;
+
+    // Keep Battles fully gated behind Start Battle / Start Round.
+    // This stops the mode from spawning enemies in the background before the player starts the round.
+    b.towerBoostTimer=Math.max(0,(b.towerBoostTimer||0)-dt);
+    b.glitchSurgeTimer=Math.max(0,(b.glitchSurgeTimer||0)-dt);
+    b.surgeMultiplier=b.glitchSurgeTimer>0?1.5:1;
+    for(const k in b.sendCooldowns)b.sendCooldowns[k]=Math.max(0,b.sendCooldowns[k]-dt);
+
+    if(!game.waveActive){
+      b.roundActive=false;
+      b.ecoTimer=6;
+      b.botTimer=clamp(b.botTimer||3.2,2.6,6.2);
+      b.resolveTimer=.9;
+      return;
+    }
+
+    b.roundActive=true;
+    b.matchStarted=true;
     b.ecoTimer-=dt;
     b.botTimer-=dt;
     b.botBuildTimer-=dt;
     b.resolveTimer-=dt;
-    b.towerBoostTimer=Math.max(0,b.towerBoostTimer-dt);
-    b.glitchSurgeTimer=Math.max(0,b.glitchSurgeTimer-dt);
-    b.surgeMultiplier=b.glitchSurgeTimer>0?1.5:1;
-    for(const k in b.sendCooldowns)b.sendCooldowns[k]=Math.max(0,b.sendCooldowns[k]-dt);
+
     if(b.ecoTimer<=0){
       b.ecoTimer+=6;
       const income=Math.max(0,Math.round(b.playerEco));
@@ -380,6 +466,7 @@
   function sendGlitch(key){
     const b=game?.battle, item=SEND_GLITCHES.find(x=>x.key===key);
     if(!b||!item)return;
+    if(!game.waveActive)return showToast('Press Start Battle / Start Round before sending glitches.');
     if((b.sendCooldowns[key]||0)>0)return showToast('Send is cooling down.');
     if(game.coins<item.cost)return showToast('Not enough coins.');
     game.coins-=item.cost;
@@ -398,6 +485,7 @@
   function useBattleBoost(kind){
     const b=game?.battle;
     if(!b||b.boosts[kind]<=0)return;
+    if(!game.waveActive)return showToast('Start the battle round before using boosts.');
     if(kind==='tower'){
       b.boosts.tower--;
       b.towerBoostTimer=BATTLE_BOOSTS.tower.duration;
@@ -417,7 +505,7 @@
     updateUI();renderDock();
   }
   function botSendGlitches(){
-    const b=game?.battle;if(!b)return;
+    const b=game?.battle;if(!b||!game.waveActive)return;
     const pool=game.wave<4?['layer1','layer1','runner']:(game.wave<9?['layer1','layer2','runner','shielded']:['layer2','runner','layer3','camo','shielded','fast']);
     const type=choice(pool);
     const count=type==='shielded'||type==='camo'?2:(type==='layer3'?3:4);
@@ -457,6 +545,14 @@
     if(!game||game.waveActive||game.lives<=0)return;
     unlockAudio();
     game.waveActive=true; game.perfect=true;
+    if(game.battle){
+      game.battle.matchStarted=true;
+      game.battle.roundActive=true;
+      game.battle.ecoTimer=6;
+      game.battle.botTimer=1.65;
+      game.battle.resolveTimer=.9;
+      battleLog(game.wave===1?'Battle started — defend, earn eco, and send glitches.':`Round ${game.wave} started — bot pressure incoming.`);
+    }
     game.wavePlan=game.waveManager.getWave(game.wave);
     game.spawnQueue=game.waveManager.buildQueue(game.wave,game.wavePlan);
     game.spawnTimer=.12;
@@ -471,7 +567,7 @@
   }
   function makeEnemyObject(type,data,path,x,y,pathIndex=0,progress=0,scale=1){
     const hp=Math.max(1,Math.round(data.hp*scale));
-    return {id:game.nextEnemyId++,type,name:data.name,x,y,pathIndex,path,progress,hp,maxHp:hp,speed:data.speed*(game.level.bg==='desert'?1.08:1),reward:data.reward,score:data.score,color:data.color,armor:data.armor||0,flying:!!data.flying,healer:!!data.healer,emp:!!data.emp,split:!!data.split,boss:!!data.boss,layer:data.layer||0,splitsTo:data.splitsTo||null,shielded:!!data.shielded,fast:!!data.fast,camo:!!data.camo,slowImmune:!!data.slowImmune,alive:true,slow:0,burn:0,poison:0,stun:0,statusEffects:[]};
+    return {id:game.nextEnemyId++,type,name:data.name,x,y,pathIndex,path,progress,hp,maxHp:hp,speed:data.speed*(game.level.bg==='desert'?1.08:1),reward:data.reward,score:data.score,color:data.color,armor:data.armor||0,flying:!!data.flying,healer:!!data.healer,emp:!!data.emp,split:!!data.split,boss:!!data.boss,layer:data.layer||0,splitsTo:data.splitsTo||null,shielded:!!data.shielded,fast:!!data.fast,camo:!!(data.camo||data.isPhantom),isPhantom:!!(data.isPhantom||data.phantom||data.camo),isArmored:!!(data.isArmored||data.armored||data.shielded||data.armor>=8),armored:!!(data.isArmored||data.armored||data.armor>=8),slowImmune:!!data.slowImmune,alive:true,slow:0,burn:0,poison:0,stun:0,statusEffects:[]};
   }
   function spawnEnemy(item){
     const data=ENEMIES[item.type]||ENEMIES.layer1;
@@ -479,7 +575,8 @@
     const path=item.alt&&game.level.altPath?game.level.altPath:game.level.path;
     const e=makeEnemyObject(item.type,data,path,path[0][0],path[0][1],0,0,scale);
     game.enemies.push(e);
-    if(e.camo&&game.wave<7)addFloating('CAMO',e.x+38,e.y-18,'#cbb7ff');
+    if(e.isPhantom&&game.wave<9)addFloating('PHANTOM',e.x+38,e.y-18,'#cbb7ff');
+    if(e.isArmored&&game.wave<9)addFloating('ARMOR',e.x-34,e.y-18,'#d7d7d7');
     if(e.boss){game.shake=.7;addFloating('BOSS WARNING',450,90,'#ff4f7a');playSound('blast');}
   }
   function spawnLayerChildren(parent){
@@ -499,8 +596,8 @@
 
   function loop(now){const raw=Math.min(.05,(now-last)/1000);last=now;if(raw>.045&&game&&!game.perfWarned){perf.autoLowFx=true;game.perfWarned=true;showToast('Performance mode enabled for smoother battle.',1800)} if(game&&!game.paused){game.perfMode=shouldPerfMode(); update(Math.min(.085, raw * game.speed));} if(document.visibilityState!=='hidden') draw(); requestAnimationFrame(loop);} requestAnimationFrame(loop);
   function shouldPerfMode(){return !!(game && (save.settings.reduced || perf.autoLowFx || (isMobile() && (game.wave>=7 || game.speed>1 || game.enemies.length>22 || game.projectiles.length>30)) || game.enemies.length>36 || game.projectiles.length>40));}
-  function update(dt){if(!game)return; if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0)$('toast').classList.add('hidden')} const cdMul=1+labRank('cooldown')*.10; for(const k in game.abilities) game.abilities[k]=Math.max(0,game.abilities[k]-dt*cdMul); game.overdrive=Math.max(0,game.overdrive-dt); game.shake=Math.max(0,game.shake-dt); updateBattle(dt); updateSpawn(dt); updateEnemies(dt); updateTools(dt); updateTowers(dt); updateProjectiles(dt); updateCrates(dt); updateEffects(dt); checkWaveEnd(); game.uiTimer=(game.uiTimer||0)+dt; const uiGap=game.perfMode ? .24 : .14; if(game.uiTimer>uiGap){game.uiTimer=0; updateUI(false);}}
-  function updateSpawn(dt){if((!game.waveActive && !(game.battle&&game.battle.active))||!game.spawnQueue.length)return; game.spawnTimer-=dt; let spawned=0; while(game.spawnQueue.length&&game.spawnTimer<=0){if(game.enemies.length>=PERF.maxEnemies || (game.perfMode&&spawned>=2)){game.spawnTimer=game.perfMode ? .28 : .18;break;}const item=game.spawnQueue.shift();spawnEnemy(item); spawned++; const next=game.spawnQueue[0]; game.spawnTimer=next?Math.max(game.perfMode ? .18 : .11,next.delay-item.delay):999;}}
+  function update(dt){if(!game)return; if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0)$('toast').classList.add('hidden')} const cdMul=1+labRank('cooldown')*.10; for(const k in game.abilities) game.abilities[k]=Math.max(0,game.abilities[k]-dt*cdMul); for(const k in (game.primeCooldowns||{})) game.primeCooldowns[k]=Math.max(0,game.primeCooldowns[k]-dt*cdMul); game.overdrive=Math.max(0,game.overdrive-dt); game.shake=Math.max(0,game.shake-dt); updateBattle(dt); updateSpawn(dt); updateEnemies(dt); updateTools(dt); updateTowers(dt); updateProjectiles(dt); updateCrates(dt); updateEffects(dt); checkWaveEnd(); game.uiTimer=(game.uiTimer||0)+dt; const uiGap=game.perfMode ? .24 : .14; if(game.uiTimer>uiGap){game.uiTimer=0; updateUI(false);}}
+  function updateSpawn(dt){if(!game.waveActive||!game.spawnQueue.length)return; game.spawnTimer-=dt; let spawned=0; while(game.spawnQueue.length&&game.spawnTimer<=0){if(game.enemies.length>=PERF.maxEnemies || (game.perfMode&&spawned>=2)){game.spawnTimer=game.perfMode ? .28 : .18;break;}const item=game.spawnQueue.shift();spawnEnemy(item); spawned++; const next=game.spawnQueue[0]; game.spawnTimer=next?Math.max(game.perfMode ? .18 : .11,next.delay-item.delay):999;}}
   function applyStatus(e,type,opts={}){
     if(!e||!e.alive)return;
     if(type==='frozen'&&e.slowImmune){if(Math.random()<.1)addFloating('FAST RESIST',e.x,e.y-34,'#d7ff4c');return;}
@@ -556,6 +653,7 @@
   function updateEnemies(dt){
     for(const e of game.enemies){
       if(!e.alive)continue;
+      if(e.revealed>0){e.revealed-=dt;if(e.revealed<=0&&e.isPhantom)e.camo=true;}
       updateStatusEffects(e,dt);
       if(!e.alive)continue;
       if(e.slow>0)e.slow-=dt;
@@ -612,12 +710,14 @@
     }
   }
   function tStats(t){
-    const d=TOWERS[t.type], lvl=t.level;
+    const d=TOWERS[t.type];
+    const lvl=t.type==='prime' ? primeLevel(t) : t.level;
     if(d.role==='support'){
-      let range=132+lvl*24, auraRate=.08+lvl*.035, camoReveal=lvl>=4;
+      const scannerRank=metaRank('scanner');
+      let range=132+lvl*24, auraRate=.08+lvl*.035, camoReveal=lvl>=Math.max(2,4-scannerRank);
       if(t.branch==='A'){range+=58;auraRate+=.12}
       if(t.branch==='B'){range+=28;camoReveal=true}
-      return{damage:0,range,rate:0,hit:d.hit,auraRate,camoReveal};
+      return{damage:0,range,rate:0,hit:d.hit,auraRate,camoReveal,canSeePhantom:camoReveal};
     }
     if(d.role==='economy'){
       let income=18+lvl*9;
@@ -625,22 +725,37 @@
       if(t.branch==='B')income*=1.15;
       return{damage:0,range:0,rate:0,hit:d.hit,income:Math.round(income),shardChance:t.branch==='B'?Math.min(.08+lvl*.015,.16):0};
     }
+    if(d.role==='prime'){
+      const oc=t.overclocked ? (1.15+metaRank('overclock')*.02) : 1;
+      const damage=(42+lvl*18)*(1+metaRank('damage')*.03);
+      const range=185+lvl*13+(lvl>=7?35:0);
+      const rate=(.72+lvl*.055)*(1+labRank('rate')*.04)*(game.overdrive>0?1.85:1)*oc*((game.battle&&game.battle.towerBoostTimer>0)?2.0:1);
+      return{damage,range,rate,hit:'prime',canSeePhantom:lvl>=2,prime:true};
+    }
     let damage=(24+lvl*12)*(t.type==='rocket'?1.55:t.type==='shadow'?1.85:1)*(1+metaRank('damage')*.03);
     let range=145+lvl*14+(t.type==='shadow'?90:0)+(t.type==='anti'?50:0);
     let rate=(.78+lvl*.11+(t.type==='tesla' ? .35 : 0))*(1+labRank('rate')*.04)*(game.overdrive>0?1.85:1)*((game.battle&&game.battle.towerBoostTimer>0)?2.0:1);
+    let hit=d.hit;
     if(t.branch==='A'){
       if(t.type==='flame')damage*=1.25;if(t.type==='tesla')damage*=1.05,range+=25;if(t.type==='cryo')range+=40;if(t.type==='rocket')range+=12;if(t.type==='shadow')damage*=1.35;if(t.type==='anti')range+=80
     }
     if(t.branch==='B'){
-      if(t.type==='rocket')damage*=2.2;if(t.type==='shadow')rate*=1.2;if(t.type==='flame')range+=15;if(t.type==='venom')damage*=1.25;if(t.type==='anti')damage*=1.28;if(t.type==='cryo')damage*=1.18
+      if(t.type==='rocket')damage*=2.2;if(t.type==='shadow')rate*=1.2;if(t.type==='flame')range+=15;if(t.type==='venom'){damage*=1.25;hit='corrosive'}if(t.type==='anti')damage*=1.28;if(t.type==='cryo')damage*=1.18
     }
     if(t.boosted)rate*=1.15;
     if(t.supported)rate*=1+(t.supportRate||.13);
+    if(t.overclocked){rate*=1.15+metaRank('overclock')*.02;range+=10;}
     if(t.rangeBoosted)range+=24;
     if(game&&game.perfMode){damage*=1.24;rate*=.76;}
-    return{damage,range,rate,hit:d.hit};
+    return{damage,range,rate,hit,canSeePhantom:t.type==='shadow'||(t.type==='anti'&&t.branch==='B')||!!t.camoReveal};
   }
-  function canTowerSeeEnemy(t,e){return !e.camo||t.type==='shadow'||(t.type==='anti'&&t.branch==='B')||!!t.camoReveal;}
+  function canTowerSeeEnemy(t,e){
+    if(e.revealed>0)return true;
+    const phantom=!!(e.isPhantom||e.camo);
+    if(!phantom)return true;
+    const s=tStats(t), scannerRank=metaRank('scanner');
+    return !!(s.canSeePhantom||t.camoReveal||t.type==='shadow'||(t.type==='anti'&&t.branch==='B')||(scannerRank>=5&&t.level>=4));
+  }
   function findTarget(t,range){
     let best=null,bestScore=-Infinity,r2=range*range,mode=t.targetMode||'first';
     if(mode==='closest')bestScore=Infinity;
@@ -650,6 +765,7 @@
       if(e.flying && !(t.type==='anti'||t.type==='tesla'||t.type==='shadow'||t.branch==='B'))continue;
       const dx=e.x-t.x,dy=e.y-t.y,d2=dx*dx+dy*dy;
       if(d2>r2)continue;
+      if(lineBlocked(t,e)&&!(t.type==='rocket'||t.type==='prime'))continue;
       const prog=e.pathIndex*10000+e.progress+(e.boss?900:0);
       let score=prog;
       if(mode==='last')score=-prog;
@@ -692,6 +808,7 @@
     if(t.type==='cryo'){p.pierce=branch==='B'?2:1;p.blastRadius=branch==='A'?58:0;}
     if(t.type==='rocket'){p.pierce=1;p.blastRadius=branch==='A'?120:88;p.life=2.4;}
     if(t.type==='tesla'){p.pierce=1;p.chainRange=branch==='A'?170:135;p.maxChains=game.perfMode?2:(branch==='A'?6:3);p.life=.85;p.homing=true;}
+    if(t.type==='prime'){const lvl=primeLevel(t);p.pierce=lvl>=6?3:2;p.speed=880;p.life=1.15;p.homing=true;p.chainRange=lvl>=8?150:0;p.maxChains=lvl>=8?(game.perfMode?2:4):0;}
     return p;
   }
   function enemyRadius(e){return e.boss?26:e.flying?18:e.layer?17:16;}
@@ -729,7 +846,7 @@
     }else{
       damageEnemy(e,p.damage,p.hit);
       addSpark(e.x,e.y,p.color);
-      if(p.type==='tesla')chainLightning(e,p);
+      if(p.type==='tesla'||p.type==='prime')chainLightning(e,p);
       p.pierce--;
       if(p.pierce<=0)p.dead=true;
     }
@@ -767,12 +884,29 @@
     if(game.effects.length>=PERF.maxEffects)return;
     game.effects.push({type:'beam',x,y,x2,y2,color,life:.16,maxLife:.16});
   }
+  function armorBreaker(effect){return ['splash','burn','dotBurn','zap','laser','pierce','prime','energy','corrosive'].includes(effect);}
+  function lineBlocked(t,e){return !!(game.firewalls||[]).some(f=>!f.decrypted&&segmentIntersectsRect(t.x,t.y,e.x,e.y,f));}
+  function segmentIntersectsRect(x1,y1,x2,y2,r){
+    const minX=r.x-r.w/2,maxX=r.x+r.w/2,minY=r.y-r.h/2,maxY=r.y+r.h/2;
+    if((x1>=minX&&x1<=maxX&&y1>=minY&&y1<=maxY)||(x2>=minX&&x2<=maxX&&y2>=minY&&y2<=maxY))return true;
+    const lines=[[minX,minY,maxX,minY],[maxX,minY,maxX,maxY],[maxX,maxY,minX,maxY],[minX,maxY,minX,minY]];
+    return lines.some(l=>segmentsCross(x1,y1,x2,y2,l[0],l[1],l[2],l[3]));
+  }
+  function segmentsCross(ax,ay,bx,by,cx,cy,dx,dy){
+    const ccw=(x1,y1,x2,y2,x3,y3)=>(y3-y1)*(x2-x1)>(y2-y1)*(x3-x1);
+    return ccw(ax,ay,cx,cy,dx,dy)!==ccw(bx,by,cx,cy,dx,dy)&&ccw(ax,ay,bx,by,cx,cy)!==ccw(ax,ay,bx,by,dx,dy);
+  }
   function damageEnemy(e,amount,effect,dot=false){
     if(!e||!e.alive)return;
     const pierce=['pierce','laser','zap'].includes(effect);
     const venomHit=effect==='poison'||effect==='venom';
     const dotHit=dot||effect==='dotBurn'||effect==='dotVenom';
-    let armorTax=dotHit?e.armor*.12:(pierce?e.armor*.2:(venomHit?e.armor*.35:e.armor));
+    if(e.isArmored&&!armorBreaker(effect)){
+      const chip=metaRank('armor');
+      if(chip<=0){if(!dotHit&&Math.random()<.16)addFloating('ARMOR',e.x,e.y-34,'#d7d7d7');return;}
+      amount*=Math.min(.55,.10+chip*.08);
+    }
+    let armorTax=dotHit?Math.min(e.armor*.12,amount*.25):(pierce?Math.min(e.armor*.2,amount*.32):(venomHit?Math.min(e.armor*.35,amount*.50):Math.min(e.armor,amount*.70)));
     let real=Math.max(1,Math.round(amount-armorTax));
     if(e.shielded&&amount<65&&!['pierce','laser','splash','zap'].includes(effect)&&!dotHit){
       real=Math.max(1,Math.round(real*.22));
@@ -780,7 +914,7 @@
     }
     if(!dotHit){
       if(effect==='burn')applyStatus(e,'burn',{duration:3.2,dps:10+game.wave*.55,color:'#ff6b2c'});
-      if(venomHit)applyStatus(e,'venom',{duration:4.4,dps:8+game.wave*.45,color:'#b2ff37'});
+      if(venomHit||effect==='corrosive')applyStatus(e,'venom',{duration:4.4,dps:8+game.wave*.45,color:effect==='corrosive'?'#ffd65a':'#b2ff37'});
       if(effect==='slow')applyStatus(e,'frozen',{duration:2.7,magnitude:.50,color:'#9deaff'});
       if(effect==='zap'&&Math.random()<.22)applyStatus(e,'frozen',{duration:.75,magnitude:.28,color:'#55d7ff'});
     }
@@ -841,11 +975,33 @@
     if(shards>0){save.shards+=shards;persist();addFloating(`+${shards} SHARD`,450,212,'#a8ff24');}
     return total;
   }
+  function grantPrimeXp(amount){
+    const p=primeNode(); if(!p)return;
+    const gain=Math.round(amount*(1+metaRank('prime')*.12));
+    p.xp=(p.xp||0)+gain;
+    let leveled=false;
+    while((p.primeLevel||1)<10 && p.xp>=primeNextXp(p.primeLevel||1)){
+      p.xp-=primeNextXp(p.primeLevel||1);
+      p.primeLevel=(p.primeLevel||1)+1;
+      p.level=p.primeLevel;
+      leveled=true;
+    }
+    addFloating(`PRIME +${gain} XP`,p.x,p.y-52,'#b026ff');
+    if(leveled){addExplosion(p.x,p.y,TOWERS.prime.color,70);showToast(`Prime Node reached Level ${p.primeLevel}!`);playSound('upgrade');}
+  }
   function checkWaveEnd(){
     if(!game.waveActive)return;
     if(!game.spawnQueue.length&&!game.enemies.length){
       game.waveActive=false;
+      if(game.battle){
+        game.battle.roundActive=false;
+        game.battle.ecoTimer=6;
+        game.battle.botTimer=2.8;
+        game.battle.resolveTimer=.9;
+        battleLog(`Round ${game.wave} secured — build, upgrade, or press Start Round.`);
+      }
       const minerIncome=collectMinerIncome();
+      grantPrimeXp(65+game.wave*22+(game.wavePlan?.bossWave?60:0));
       const paceBonus=game.maxWaves<=15?32:20;
       let bonus=95+game.wave*(14+paceBonus)+(game.perfect?65:0)+Math.min(160,game.combo*3)+minerIncome;
       if((game.turboBonus||0)===game.wave){bonus+=45+game.wave*6;addFloating('TURBO BONUS',450,145,'#55d7ff');}
@@ -901,7 +1057,7 @@
     if(k==='mine'){game.selectedTool='mine';dockTab='abilities';game.message='Tap the field to place a mine.';playSound('tap')}
     if(k==='drone'){
       const live=game.enemies.filter(x=>x.alive);
-      for(let i=0;i<(game.perfMode?5:8);i++){const e=choice(live);if(e)damageEnemy(e,110,'laser');}
+      for(let i=0;i<(game.perfMode?5:8);i++){const e=choice(live);if(e)damageEnemy(e,110,'standard');}
       addFloating('DRONE SWARM',450,160,'#fff');playSound('drone')
     }
     if(k==='pulse'){
@@ -910,32 +1066,51 @@
     }
     updateUI();renderDock();
   }
+  function usePrimeAbility(key){
+    const p=primeNode(), meta=PRIME_ABILITIES[key];
+    if(!p||!meta||primeLevel(p)<meta.level||game.primeCooldowns[key]>0)return;
+    game.primeCooldowns[key]=meta.cd;
+    if(key==='novaScan'){
+      for(const e of game.enemies){if(e.alive){e.revealed=6;if(e.isPhantom)e.camo=false;applyStatus(e,'frozen',{duration:2.8,magnitude:.42,color:'#b026ff'});}}
+      addFloating('NOVA SCAN',450,145,'#cbb7ff');addExplosion(p.x,p.y,'#b026ff',210);playSound('nova');
+    }
+    if(key==='annihilation'){
+      for(const e of game.enemies){if(e.alive)damageEnemy(e,e.boss?520:210,'prime');}
+      addFloating('ANNIHILATION CORE',450,145,'#ffd65a');addExplosion(450,500,'#ffd65a',300);playSound('blast');
+    }
+    updateUI();renderDock();
+  }
 
   function placeTower(x,y){
     const key=game.selectedType;if(!key)return;const data=TOWERS[key];
+    if(key==='prime'&&primeNode())return showToast('Only one Prime Node can be placed per match.');
     if(game.coins<data.cost)return showToast('Not enough coins.');
     const c=canPlace(x,y);if(!c.ok)return showToast(c.reason);
-    game.towers.push({id:game.nextTowerId++,type:key,x,y,level:1,spent:data.cost,cooldown:0,branch:null,disabled:0,boosted:false,supported:false,camoReveal:false,rangeBoosted:false,targetMode:'first'});
-    game.coins-=data.cost;stats.towers++;game.selectedType=null;playSound('place');addExplosion(x,y,data.color,25);showToast(`${data.name} placed.`);persist();updateUI();
+    const oc=overclockTileAt(x,y);
+    const tower={id:game.nextTowerId++,type:key,x,y,level:1,spent:data.cost,cooldown:0,branch:null,disabled:0,boosted:false,supported:false,camoReveal:false,rangeBoosted:false,targetMode:'first',overclocked:!!oc};
+    if(key==='prime'){tower.primeLevel=1;tower.xp=0;tower.canSeePhantom=true;}
+    game.towers.push(tower);
+    game.coins-=data.cost;stats.towers++;game.selectedType=null;playSound('place');addExplosion(x,y,data.color,oc?46:25);showToast(`${data.name} placed${oc?' on Overclock Tile +speed':''}.`);persist();updateUI();
   }
   function placeTool(type,x,y){if(type==='scrap'){const t=game.tools.find(o=>Math.hypot(o.x-x,o.y-y)<50);if(t){game.tools=game.tools.filter(o=>o!==t);game.coins+=50;playSound('coin');showToast('Tool scrapped. +50 coins')}return} if(type==='mine'){game.tools.push({id:game.nextToolId++,type,x,y});game.selectedTool=null;playSound('mine');showToast('Mine armed.');return} const costs={barrier:135,boost:170}; if(game.coins<costs[type])return showToast('Not enough coins.'); if(type==='barrier'&&distPath(x,y)>60)return showToast('Barrier must touch enemy path.'); if(type==='boost'&&distPath(x,y)<65)return showToast('Boost pad must be off path.'); game.coins-=costs[type];game.tools.push({id:game.nextToolId++,type,x,y});game.selectedTool=null;playSound('place');showToast(type==='barrier'?'Barrier placed.':'Boost pad placed.');}
-  function canPlace(x,y){if(x<45||x>855||y<45||y>955)return{ok:false,reason:'Too close to edge.'};if(distPath(x,y)<56)return{ok:false,reason:'Too close to path.'};for(const t of game.towers)if(Math.hypot(t.x-x,t.y-y)<66)return{ok:false,reason:'Too close to another tower.'};return{ok:true}}
+  function canPlace(x,y){if(x<45||x>855||y<45||y>955)return{ok:false,reason:'Too close to edge.'};if(activeFirewallAt(x,y))return{ok:false,reason:'Decrypt this firewall first.'};if(distPath(x,y)<56)return{ok:false,reason:'Too close to path.'};for(const t of game.towers)if(Math.hypot(t.x-x,t.y-y)<66)return{ok:false,reason:'Too close to another tower.'};return{ok:true}}
   function selectTower(x,y){let best=null,bd=40;for(const t of game.towers){const d=Math.hypot(t.x-x,t.y-y);if(d<bd){best=t;bd=d}} if(!best){game.selectedTowerId=null;$('towerPanel').classList.add('hidden');return} game.selectedTowerId=best.id;showTowerPanel();}
   function selectedTower(){return game.towers.find(t=>t.id===game.selectedTowerId)}
   function showTowerPanel(){
     const t=selectedTower(); if(!t)return; const d=TOWERS[t.type],s=tStats(t),cost=upgradeCost(t),role=d.role;
     $('selectedTowerName').textContent=`${d.icon} ${d.name} L${t.level}${t.branch?' • '+(t.branch==='A'?d.branchA[0]:d.branchB[0]):''}`;
-    let statText=`DMG ${Math.round(s.damage)} • RNG ${Math.round(s.range)} • SPD ${s.rate.toFixed(1)}/s`;
+    let statText=`DMG ${Math.round(s.damage)} • RNG ${Math.round(s.range)} • SPD ${s.rate.toFixed(1)}/s${t.overclocked?' • OC +SPD':''}${s.canSeePhantom?' • PHANTOM SCAN':''}`;
     if(role==='support')statText=`AURA ${Math.round(s.range)} • BUFF +${Math.round((s.auraRate||0)*100)}% • ${s.camoReveal?'CAMO SCAN':'NO CAMO SCAN'}`;
     if(role==='economy')statText=`INCOME +${s.income}/wave${s.shardChance?` • SHARD ${Math.round(s.shardChance*100)}%`:''}`;
+    if(role==='prime')statText=`PRIME XP ${Math.floor(t.xp||0)}/${primeNextXp(primeLevel(t))} • AUTO LEVEL ${primeLevel(t)}/10 • ${primeLevel(t)>=3?'NOVA READY':'NOVA L3'} • ${primeLevel(t)>=10?'ANNIHILATION READY':'ANNIHILATION L10'}`;
     $('selectedTowerStats').textContent=`${statText} • Sell ${sellValue(t)}`;
-    $('upgradeTowerBtn').textContent=t.level>=5?'Max Level':`Upgrade ${cost}`;$('upgradeTowerBtn').disabled=t.level>=5||game.coins<cost;
-    $('branchTowerBtn').disabled=t.level<3||!!t.branch;$('branchTowerBtn').textContent=t.branch?'Branched':'Choose Branch';
-    $('targetModeBtn').disabled=role!=='damage';$('targetModeBtn').textContent=role==='damage'?`Target: ${TARGET_LABELS[t.targetMode||'first']}`:'No Target';
+    $('upgradeTowerBtn').textContent=role==='prime'?'XP Leveling':(t.level>=5?'Max Level':`Upgrade ${cost}`);$('upgradeTowerBtn').disabled=role==='prime'||t.level>=5||game.coins<cost;
+    $('branchTowerBtn').disabled=role==='prime'||t.level<3||!!t.branch;$('branchTowerBtn').textContent=role==='prime'?'Auto Abilities':(t.branch?'Branched':'Choose Branch');
+    $('targetModeBtn').disabled=!(role==='damage'||role==='prime');$('targetModeBtn').textContent=(role==='damage'||role==='prime')?`Target: ${TARGET_LABELS[t.targetMode||'first']}`:'No Target';
     $('towerPanel').classList.remove('hidden');
   }
   function cycleTargetMode(){
-    const t=selectedTower(); if(!t||TOWERS[t.type].role!=='damage')return;
+    const t=selectedTower(); if(!t||!(TOWERS[t.type].role==='damage'||TOWERS[t.type].role==='prime'))return;
     const i=TARGET_MODES.indexOf(t.targetMode||'first');
     t.targetMode=TARGET_MODES[(i+1)%TARGET_MODES.length];
     showToast(`${TOWERS[t.type].name} targeting: ${TARGET_LABELS[t.targetMode]}`);
@@ -947,18 +1122,33 @@
   function openBranchModal(){const t=selectedTower(); if(!t||t.branch)return; const d=TOWERS[t.type];openModal(`<h2>Choose ${d.name} Branch</h2><p>This tower becomes more specialized. Choose one path.</p><div class="branch-grid"><button class="branch-card" id="branchA"><h3>${d.branchA[0]}</h3><p>${d.branchA[1]}</p></button><button class="branch-card" id="branchB"><h3>${d.branchB[0]}</h3><p>${d.branchB[1]}</p></button></div>`);setTimeout(()=>{$('branchA').onclick=()=>{t.branch='A';closeModal();showTowerPanel();playSound('upgrade')};$('branchB').onclick=()=>{t.branch='B';closeModal();showTowerPanel();playSound('upgrade')}});}
 
   canvas.addEventListener('pointerdown',e=>{e.preventDefault();unlockAudio();});
-  canvas.addEventListener('pointerup',e=>{e.preventDefault();if(!game||game.paused)return; const p=canvasPoint(e); const crate=game.crates.find(c=>Math.hypot(c.x-p.x,c.y-p.y)<40); if(crate){const reward=Math.round(choice([60,80,100,125])*coinMultiplier());game.coins+=reward;game.score+=reward*4;crate.life=0;addExplosion(crate.x,crate.y,'#ffd65a',35);addFloating(`+${reward}`,crate.x,crate.y,'#ffd65a');playSound('coin');return} if(game.selectedTool)placeTool(game.selectedTool,p.x,p.y); else if(game.selectedType)placeTower(p.x,p.y); else selectTower(p.x,p.y); updateUI();});
+  canvas.addEventListener('pointerup',e=>{e.preventDefault();if(!game||game.paused)return; const p=canvasPoint(e); const fw=activeFirewallAt(p.x,p.y); if(fw){decryptFirewall(fw);updateUI();return;} const crate=game.crates.find(c=>Math.hypot(c.x-p.x,c.y-p.y)<40); if(crate){const reward=Math.round(choice([60,80,100,125])*coinMultiplier());game.coins+=reward;game.score+=reward*4;crate.life=0;addExplosion(crate.x,crate.y,'#ffd65a',35);addFloating(`+${reward}`,crate.x,crate.y,'#ffd65a');playSound('coin');return} if(game.selectedTool)placeTool(game.selectedTool,p.x,p.y); else if(game.selectedType)placeTower(p.x,p.y); else selectTower(p.x,p.y); updateUI();});
   function canvasPoint(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}}
 
   function distPath(x,y){let min=9999;const paths=[game?.level.path||LEVELS[0].path,game?.level.altPath].filter(Boolean);for(const path of paths){for(let i=0;i<path.length-1;i++){const a=path[i],b=path[i+1];const dx=b[0]-a[0],dy=b[1]-a[1],len=dx*dx+dy*dy,t=len?clamp(((x-a[0])*dx+(y-a[1])*dy)/len,0,1):0;min=Math.min(min,Math.hypot(x-(a[0]+dx*t),y-(a[1]+dy*t)));}}return min;}
+  function inRectZone(x,y,z){return x>=z.x-z.w/2&&x<=z.x+z.w/2&&y>=z.y-z.h/2&&y<=z.y+z.h/2;}
+  function overclockTileAt(x,y){return (game?.overclockTiles||[]).find(z=>inRectZone(x,y,z));}
+  function activeFirewallAt(x,y){return (game?.firewalls||[]).find(f=>!f.decrypted&&inRectZone(x,y,f));}
+  function decryptCost(f){return Math.max(80,Math.round(f.cost*(1-metaRank('firewall')*.08)));}
+  function decryptFirewall(f){const cost=decryptCost(f);if(game.coins<cost)return showToast(`Need ${cost} coins to decrypt ${f.label}.`);game.coins-=cost;f.decrypted=true;staticKey='';addExplosion(f.x,f.y,'#55d7ff',70);addFloating('DECRYPTED',f.x,f.y-44,'#55d7ff');showToast(`${f.label} decrypted. New build space open.`);playSound('upgrade');}
 
-  function draw(){frameNow=performance.now(); ctx.clearRect(0,0,W,H); if(!game){drawIdle();return} ctx.save(); if(game.shake>0&&!save.settings.reduced&&!game.perfMode)ctx.translate(rand(-4,4)*game.shake,rand(-4,4)*game.shake); drawStaticField(); drawCoreAndIn(); drawTools(); drawTowers(); drawEnemies(); drawProjectiles(); drawCrates(); drawEffects(); drawFloating(); ctx.restore();}
+  function draw(){frameNow=performance.now(); ctx.clearRect(0,0,W,H); if(!game){drawIdle();return} ctx.save(); if(game.shake>0&&!save.settings.reduced&&!game.perfMode)ctx.translate(rand(-4,4)*game.shake,rand(-4,4)*game.shake); drawStaticField(); drawDynamicMapFeatures(); drawCoreAndIn(); drawTools(); drawTowers(); drawEnemies(); drawProjectiles(); drawCrates(); drawEffects(); drawFloating(); ctx.restore();}
   function drawIdle(){ctx.fillStyle='#050509';ctx.fillRect(0,0,W,H);ctx.fillStyle='#a8ff24';ctx.font='bold 34px Arial';ctx.textAlign='center';ctx.fillText('EMX CORE DEFENSE',W/2,H/2);}
 
   function drawStaticField(){const key=game.levelKey+'-'+(game.level.altPath?'alt':'main'); if(!staticCanvas||staticKey!==key){staticKey=key;staticCanvas=document.createElement('canvas');staticCanvas.width=W;staticCanvas.height=H;staticCtx=staticCanvas.getContext('2d');const oldCtx=ctx;ctx.save();drawBackground(true);drawPath(game.level.path);if(game.level.altPath)drawPath(game.level.altPath,true);ctx.restore();staticCtx.drawImage(canvas,0,0);ctx.clearRect(0,0,W,H);}ctx.drawImage(staticCanvas,0,0); if(!game.perfMode&&!save.settings.reduced){ctx.globalAlpha=.12;ctx.fillStyle=game.level.color;for(let i=0;i<12;i++){const x=(i*137+frameNow*.012)%W,y=(i*211)%H;ctx.beginPath();ctx.arc(x,y,1+(i%3),0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;}}
   function drawBackground(staticOnly=false){const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,'rgba(30,255,70,.08)');g.addColorStop(.5,'rgba(255,56,248,.06)');g.addColorStop(1,'rgba(85,215,255,.04)');ctx.fillStyle='#050509';ctx.fillRect(0,0,W,H);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.strokeStyle='rgba(168,255,36,.07)';ctx.lineWidth=1;const grid=lowFx()?130:65;for(let x=0;x<W;x+=grid){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}for(let y=0;y<H;y+=grid){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()} const color=game.level.color;ctx.globalAlpha=lowFx() ? .10 : .18;ctx.fillStyle=color;const dots=lowFx()?6:20;for(let i=0;i<dots;i++){const x=(i*137+performance.now()*(lowFx() ? .004 : .012))%W,y=(i*211)%H;ctx.beginPath();ctx.arc(x,y,1+(i%3),0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;}
   function drawPath(path,alt=false){ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=alt?'rgba(168,76,255,.3)':'rgba(114,255,21,.35)';ctx.lineWidth=72;drawPolyline(path);ctx.strokeStyle='rgba(255,255,255,.16)';ctx.lineWidth=46;drawPolyline(path);ctx.strokeStyle='rgba(0,0,0,.78)';ctx.lineWidth=32;drawPolyline(path);ctx.setLineDash([18,14]);ctx.strokeStyle=alt?'#a84cff':'#ff38f8';ctx.lineWidth=4;drawPolyline(path);ctx.setLineDash([])}
   function drawPolyline(path){ctx.beginPath();ctx.moveTo(path[0][0],path[0][1]);for(let i=1;i<path.length;i++)ctx.lineTo(path[i][0],path[i][1]);ctx.stroke();}
+  function drawDynamicMapFeatures(){
+    const pulse=.55+.45*Math.sin(frameNow/260);
+    for(const z of game.overclockTiles||[]){
+      ctx.save();ctx.globalAlpha=.32+.12*pulse;ctx.fillStyle='rgba(168,255,36,.16)';ctx.strokeStyle='#a8ff24';ctx.lineWidth=3;ctx.shadowColor='#a8ff24';ctx.shadowBlur=lowFx()?0:18;ctx.beginPath();ctx.roundRect(z.x-z.w/2,z.y-z.h/2,z.w,z.h,18);ctx.fill();ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle='#a8ff24';ctx.font='bold 12px Arial';ctx.textAlign='center';ctx.fillText(z.label,z.x,z.y+4);ctx.restore();
+    }
+    for(const f of game.firewalls||[]){
+      if(f.decrypted)continue;
+      ctx.save();ctx.globalAlpha=.88;ctx.fillStyle='rgba(176,38,255,.16)';ctx.strokeStyle='#ff38f8';ctx.lineWidth=3;ctx.shadowColor='#ff38f8';ctx.shadowBlur=lowFx()?0:16;ctx.beginPath();ctx.roundRect(f.x-f.w/2,f.y-f.h/2,f.w,f.h,14);ctx.fill();ctx.stroke();ctx.shadowBlur=0;ctx.setLineDash([8,6]);ctx.strokeStyle='#55d7ff';ctx.strokeRect(f.x-f.w/2+8,f.y-f.h/2+8,f.w-16,f.h-16);ctx.setLineDash([]);ctx.fillStyle='#fff';ctx.font='bold 12px Arial';ctx.textAlign='center';ctx.fillText(f.label,f.x,f.y-4);ctx.fillStyle='#ffd65a';ctx.fillText(`${decryptCost(f)}c`,f.x,f.y+14);ctx.restore();
+    }
+  }
   function drawCoreAndIn(){const p=game.level.path, start=p[0], end=p[p.length-1];drawNode(start[0],start[1],'IN','#72ff15');drawNode(end[0],end[1],'CORE','#ff38f8'); if(game.level.altPath)drawNode(game.level.altPath[0][0],game.level.altPath[0][1],'IN','#a84cff');}
   function drawNode(x,y,text,color){ctx.shadowColor=color;ctx.shadowBlur=18;ctx.fillStyle='#090912';ctx.strokeStyle=color;ctx.lineWidth=5;ctx.beginPath();ctx.arc(x,y,34,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle=color;ctx.font='bold 13px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,x,y)}
   function drawTools(){for(const t of game.tools){const color=t.type==='barrier'?'#55d7ff':t.type==='boost'?'#a8ff24':'#ff38f8';ctx.shadowColor=color;ctx.shadowBlur=16;ctx.strokeStyle=color;ctx.lineWidth=3;ctx.fillStyle='rgba(255,255,255,.08)';ctx.beginPath();ctx.arc(t.x,t.y,t.type==='boost'?42:32,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle=color;ctx.font='22px Arial';ctx.textAlign='center';ctx.fillText(t.type==='barrier'?'🛡️':t.type==='boost'?'💠':'💣',t.x,t.y+8)}}
@@ -970,10 +1160,12 @@
       }
       ctx.shadowColor=d.color;ctx.shadowBlur=lowFx()?0:18;ctx.fillStyle='rgba(10,10,18,.9)';ctx.strokeStyle=t.disabled>0?'#666':d.color;ctx.lineWidth=4;ctx.beginPath();ctx.arc(t.x,t.y,27,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.shadowBlur=0;
       if(t.supported){ctx.strokeStyle='#55d7ff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(t.x,t.y,33,0,Math.PI*2);ctx.stroke();}
-      if(t.camoReveal){ctx.setLineDash([4,4]);ctx.strokeStyle='#cbb7ff';ctx.beginPath();ctx.arc(t.x,t.y,38,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
+      if(t.overclocked){ctx.strokeStyle='#a8ff24';ctx.lineWidth=2;ctx.beginPath();ctx.arc(t.x,t.y,39+Math.sin(frameNow/140)*2,0,Math.PI*2);ctx.stroke();}
+      if(t.camoReveal||t.type==='prime'){ctx.setLineDash([4,4]);ctx.strokeStyle='#cbb7ff';ctx.beginPath();ctx.arc(t.x,t.y,38,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
       ctx.fillStyle='#fff';ctx.font='22px Arial';ctx.textAlign='center';ctx.fillText(d.icon,t.x,t.y+8);ctx.font='bold 11px Arial';ctx.fillStyle='#fff';ctx.fillText(`L${t.level}`,t.x,t.y+44);
       if(t.branch){ctx.fillStyle=t.branch==='A'?'#a8ff24':'#ff38f8';ctx.fillText(t.branch,t.x+24,t.y-22)}
       if(d.role==='economy'){ctx.fillStyle='#ffd65a';ctx.fillText('+$',t.x-24,t.y-22)}
+      if(d.role==='prime'){ctx.fillStyle='#b026ff';ctx.fillText(`P${primeLevel(t)}`,t.x-25,t.y-22)}
       if(game.selectedTowerId===t.id&&s.range>0){ctx.strokeStyle='rgba(255,255,255,.38)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(t.x,t.y,s.range,0,Math.PI*2);ctx.stroke();}
     }
   }
@@ -984,8 +1176,8 @@
       if(e.camo)ctx.globalAlpha=.72;
       ctx.shadowColor=e.color;ctx.shadowBlur=lowFx()?0:(e.boss?24:13);ctx.fillStyle=e.color;ctx.beginPath();ctx.arc(e.x,e.y,size,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.globalAlpha=1;
       if(e.layer){ctx.fillStyle='#071010';ctx.font='bold 13px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(e.layer,e.x,e.y+1)}
-      if(e.camo){ctx.setLineDash([5,5]);ctx.strokeStyle='#cbb7ff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(e.x,e.y,size+7,0,Math.PI*2);ctx.stroke();ctx.setLineDash([])}
-      if(e.shielded){ctx.strokeStyle='#55d7ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(e.x,e.y,size+9,0,Math.PI*2);ctx.stroke()}
+      if(e.isPhantom||e.camo){ctx.setLineDash([5,5]);ctx.strokeStyle='#cbb7ff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(e.x,e.y,size+7,0,Math.PI*2);ctx.stroke();ctx.setLineDash([])}
+      if(e.shielded||e.isArmored){ctx.strokeStyle=e.isArmored?'#d7d7d7':'#55d7ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(e.x,e.y,size+9,0,Math.PI*2);ctx.stroke()}
       if(e.fast){ctx.fillStyle='#d7ff4c';ctx.font='bold 12px Arial';ctx.fillText('»',e.x+19,e.y-12)}
       if(e.flying){ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(e.x,e.y,22,0,Math.PI*2);ctx.stroke()}
       if(e.healer){ctx.fillStyle='#72ff15';ctx.fillRect(e.x-3,e.y-20,6,12);ctx.fillRect(e.x-8,e.y-15,16,4)}
@@ -1023,16 +1215,17 @@
     setText('livesText',game.lives);
     setText('coinsText',Math.floor(game.coins));
     setText('scoreText',Math.floor(game.score));
-    setText('startWaveBtn',game.waveActive?'Wave Running':(battle?'Start Round':'Start Wave'));
+    const battleStartLabel=battle ? (game.battle.matchStarted?`Start Round ${game.wave}`:'Start Battle') : 'Start Wave';
+    setText('startWaveBtn',game.waveActive?(battle?'Round Running':'Wave Running'):battleStartLabel);
     setText('pauseBtn',game.paused?'Resume':'Pause');
     setText('speedBtn',`${game.speed}x Speed`);
     setText('soundBtn',save.settings.sound?'🔊':'🔇');
-    const battleBoost=game.battle?.towerBoostTimer>0?' • Tower boost active':'';
-    setText('statusText',game.perfMode?'Performance mode active — heavy wave optimized.':((game.message||'Ready.')+battleBoost));
+    const battleBoost=game.battle?.towerBoostTimer>0?' • Tower boost active':''; const primeMsg=primeNode()?` • Prime L${primeLevel()}`:'';
+    setText('statusText',game.perfMode?'Performance mode active — heavy wave optimized.':((game.message||'Ready.')+battleBoost+primeMsg));
     if(battle){
       $('battleHud').classList.remove('hidden');
       setText('ecoText',Math.round(game.battle.playerEco));
-      setText('ecoTimerText',`${Math.ceil(game.battle.ecoTimer)}s`);
+      setText('ecoTimerText',game.waveActive?`${Math.ceil(game.battle.ecoTimer)}s`:'READY');
       setText('opponentLivesText',Math.max(0,Math.ceil(game.battle.opponentLives)));
       setText('opponentPressureText',Math.round(game.battle.opponentPressure));
     }else $('battleHud').classList.add('hidden');
@@ -1044,7 +1237,7 @@
   function renderMissions(){const m=[{t:'Place 3 towers',d:game.towers.length>=3},{t:'Defeat 25 enemies',d:game.kills>=25},{t:'Clear boss wave',d:game.bossKills>0},{t:'Keep perfect core',d:game.perfect&&game.wave>1}];$('missionList').innerHTML=m.map(x=>`<div class="mission-item ${x.d?'done':''}"><span>${x.t}</span><b>${x.d?'DONE':'ACTIVE'}</b></div>`).join('')}
 
   function openModal(html){cancelAnimationFrame(resultAnimFrame);$('modal').classList.remove('result-shake');$('modalBody').innerHTML=html;$('modal').classList.remove('hidden')} function closeModal(){cancelAnimationFrame(resultAnimFrame);$('modal').classList.remove('result-shake');$('modal').classList.add('hidden')}
-  function openGuide(){playSound('tap');openModal(`<h2>📘 EMX Defense Guide</h2><div class="guide-grid"><p><strong>BTD Layers:</strong> Purple multi-layer glitches pop into green layers, then blue layers. If a bigger layer reaches the core, it costs more lives.</p><p><strong>Projectiles:</strong> Shadow/Prism shots pierce through multiple enemies, Rocket/Mine attacks explode in an AoE, and Tesla chains to nearby targets.</p><p><strong>Status Effects:</strong> Cryo freezes and slows, Flame burns over time, and Venom refreshes poison timers instead of stacking infinitely.</p><p><strong>Special Enemies:</strong> Shielded enemies punish weak hits, fast enemies resist slows, camo enemies need Shadow Sniper, Prism Scanner, or EMX Hub scanner support.</p><p><strong>Support + Economy:</strong> EMX Hub buffs nearby tower speed and can reveal camo. Crypto Miner generates bonus coins every cleared wave and Path B can mine Core Shards.</p><p><strong>Targeting:</strong> Tap a tower, then use Target to switch First, Last, Strongest, or Closest targeting.</p><p><strong>Wave Manager:</strong> Campaign maps are compressed into 15-wave sprints. Elite maps run 20 waves. Boss checks hit every 5 waves, with a final boss at the cap.</p><p><strong>Spend Shards:</strong> Core Shards buy permanent meta upgrades like startup coins, global damage, faster cooldowns, reward multipliers, and shard boosts.</p></div>`)}
+  function openGuide(){playSound('tap');openModal(`<h2>📘 EMX Defense Guide</h2><div class="guide-grid"><p><strong>Phantom Glitches:</strong> Purple/camo-style glitches are invisible to normal towers. Use Shadow Sniper, Anti-Air Prism Branch B, Scanner Hub, or a Prime Node to target them.</p><p><strong>Armored Glitches:</strong> Lead-style armor ignores standard/sharp damage. Use Rocket explosions, Flame heat, Tesla energy, Shadow/Prism energy, Prime Node, or Corrosive Venom.</p><p><strong>Prime Node:</strong> Place one hero tower per match. It levels from wave XP, unlocks Nova Scan at Level 3, and Annihilation Core at Level 10.</p><p><strong>Dynamic Maps:</strong> Green Overclock Tiles permanently speed up towers placed on them. Purple Firewalls block placement and line-of-sight until you spend coins to decrypt them.</p><p><strong>Projectiles:</strong> Shadow/Prism shots pierce, Rocket/Mine attacks explode in AoE, Tesla chains, Cryo freezes, Flame burns, and Venom applies DoT.</p><p><strong>Motherboard:</strong> Spend Core Shards on permanent PC-style upgrades like Phantom Scanner BIOS, Armor-Pierce Driver, Prime XP, Decrypt Toolkit, and Overclock Tile tuning.</p></div>`)}
   function openSettings(){playSound('tap');openModal(`<h2>⚙️ Settings</h2><div class="guide-grid"><button id="setSound" class="big-btn">Sound: ${save.settings.sound?'ON':'OFF'}</button><button id="setVibrate" class="big-btn">Vibration: ${save.settings.vibrate?'ON':'OFF'}</button><button id="setReduced" class="big-btn">Performance FX: ${save.settings.reduced?'LOW':'AUTO'}</button><button id="resetAll" class="big-btn danger">Reset Save</button></div>`);setTimeout(()=>{$('setSound').onclick=()=>{save.settings.sound=!save.settings.sound;persist();openSettings()};$('setVibrate').onclick=()=>{save.settings.vibrate=!save.settings.vibrate;persist();openSettings()};$('setReduced').onclick=()=>{save.settings.reduced=!save.settings.reduced;persist();openSettings()};$('resetAll').onclick=()=>{localStorage.removeItem(saveKey);save=loadSave();stats={bosses:0,towers:0,score:0,wins:0};closeModal();updateMenu();}})}
   function showToast(msg,ms=1600){$('toast').textContent=msg;$('toast').classList.remove('hidden');toastTimer=ms/1000; if(save.settings.vibrate&&navigator.vibrate)navigator.vibrate(18)}
 

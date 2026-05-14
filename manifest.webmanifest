@@ -1,6 +1,6 @@
 {
   "name": "EMX Core Defense",
-  "short_name": "EMX Defense",
+  "short_name": "EMX Prime Defense",
   "description": "A neon EMX-branded BTD-style tower defense game with campaign, elite maps, layered glitches, pierce/AoE/status effects, meta upgrades, animated rewards, and EMX Battles Bot eco/send mode.",
   "start_url": "./index.html",
   "display": "standalone",
