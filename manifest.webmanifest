@@ -1,7 +1,7 @@
 {
   "name": "EMX Core Defense",
   "short_name": "EMX Defense",
-  "description": "A neon EMX-branded BTD-style tower defense game with layered glitches, tower targeting, support nodes, and economy nodes.",
+  "description": "A neon EMX-branded BTD-style tower defense game with layered glitches, pierce projectiles, AoE blasts, chain lightning, status effects, wave management, support nodes, and economy nodes.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#050509",
