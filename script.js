@@ -10,16 +10,16 @@
   const choice=(arr)=>arr[Math.floor(Math.random()*arr.length)];
   const todaySeed = () => new Date().toISOString().slice(0,10).replaceAll('-','');
 
-  const baseSave = {bestWave:0,bestScore:0,shards:0,stars:{grid:0,forest:0,desert:0,storm:0,lab:0,reactor:0}, lab:{coins:0,rate:0,lives:0,cooldown:0,cache:0,crit:0}, achievements:{}, settings:{sound:true,music:true,vibrate:true,reduced:false}};
+  const baseSave = {bestWave:0,bestScore:0,shards:0,stars:{grid:0,forest:0,desert:0,storm:0,lab:0,reactor:0}, lab:{coins:0,rate:0,lives:0,cooldown:0,cache:0,crit:0}, meta:{coins:0,damage:0,rate:0,lives:0,cooldown:0,economy:0,cache:0,crit:0,shards:0}, achievements:{}, settings:{sound:true,music:true,vibrate:true,reduced:false}};
   let save = loadSave();
 
   const LEVELS = [
-    {key:'grid', name:'EMX Core Grid', desc:'Starter neon route with balanced waves.', unlock:0, lives:25, coins:340, waves:30, color:'#72ff15', bg:'grid', mods:['Layered enemies','Starter'], path:[[80,140],[770,140],[770,310],[140,310],[140,520],[820,520],[820,720],[105,720],[105,880],[790,880]], enemies:['layer1','layer2','glitch','runner','shielded','tank']},
-    {key:'forest', name:'Glitch Forest', desc:'Split-lane pressure and healing enemies.', unlock:3, lives:24, coins:360, waves:30, color:'#2bff9c', bg:'forest', mods:['Split lane','Layers','Camo'], path:[[75,120],[790,120],[790,255],[470,255],[470,405],[135,405],[135,595],[815,595],[815,760],[105,760],[105,895],[790,895]], altPath:[[75,190],[310,190],[310,350],[790,350],[790,505],[510,505],[510,670],[790,670],[790,835]], enemies:['layer2','layer3','runner','swarm','healer','camo','shielded']},
-    {key:'desert', name:'Cyber Desert', desc:'Fast runners and armored tanks. Wider turns.', unlock:6, lives:22, coins:380, waves:32, color:'#ffd65a', bg:'desert', mods:['Fast enemies','Armor','Layer pops'], path:[[70,190],[820,190],[820,360],[215,360],[215,535],[805,535],[805,705],[150,705],[150,870],[790,870]], enemies:['fast','runner','layer3','shielded','tank','splitter']},
-    {key:'storm', name:'Purple Storm City', desc:'Flying drones enter the fight.', unlock:9, lives:24, coins:390, waves:34, color:'#ff38f8', bg:'storm', mods:['Flying enemies','Camo','Storm speed'], path:[[80,115],[805,115],[805,290],[100,290],[100,455],[805,455],[805,640],[100,640],[100,825],[790,825]], enemies:['layer2','fast','camo','flyer','flyer','shielded','emp']},
-    {key:'lab', name:'Overclock Lab', desc:'Boss-heavy experimental battlefield.', unlock:12, lives:26, coins:420, waves:35, color:'#55d7ff', bg:'lab', mods:['Boss heavy','EMP','Shielded'], path:[[85,105],[460,105],[460,250],[810,250],[810,420],[270,420],[270,570],[815,570],[815,745],[95,745],[95,890],[790,890]], enemies:['layer3','shielded','tank','emp','healer','splitter','fast','camo']},
-    {key:'reactor', name:'Final Core Reactor', desc:'Double entrance final map. Hardest EMX challenge.', unlock:16, lives:28, coins:450, waves:40, color:'#a84cff', bg:'reactor', mods:['Double entrance','Camo','Final bosses'], path:[[75,145],[800,145],[800,300],[115,300],[115,500],[815,500],[815,690],[155,690],[155,875],[795,875]], altPath:[[75,245],[310,245],[310,410],[805,410],[805,600],[435,600],[435,765],[795,765]], enemies:['layer3','fast','camo','flyer','shielded','tank','healer','emp','splitter']}
+    {key:'grid', name:'EMX Core Grid', desc:'Fast 15-wave starter sprint with balanced neon lanes and a final boss at Wave 15.', unlock:0, lives:25, coins:430, waves:15, color:'#72ff15', bg:'grid', mods:['15-wave sprint','Layered enemies','Final boss'], path:[[80,140],[770,140],[770,310],[140,310],[140,520],[820,520],[820,720],[105,720],[105,880],[790,880]], enemies:['layer1','layer2','glitch','runner','shielded','tank']},
+    {key:'forest', name:'Glitch Forest', desc:'15-wave split-lane map with camo pressure, healers, and punchier rewards.', unlock:3, lives:24, coins:455, waves:15, color:'#2bff9c', bg:'forest', mods:['15-wave sprint','Split lane','Camo'], path:[[75,120],[790,120],[790,255],[470,255],[470,405],[135,405],[135,595],[815,595],[815,760],[105,760],[105,895],[790,895]], altPath:[[75,190],[310,190],[310,350],[790,350],[790,505],[510,505],[510,670],[790,670],[790,835]], enemies:['layer2','layer3','runner','swarm','healer','camo','shielded']},
+    {key:'desert', name:'Cyber Desert', desc:'15-wave speed test. Runners and armor arrive earlier, but coins scale faster.', unlock:6, lives:22, coins:485, waves:15, color:'#ffd65a', bg:'desert', mods:['15-wave sprint','Fast enemies','Armor'], path:[[70,190],[820,190],[820,360],[215,360],[215,535],[805,535],[805,705],[150,705],[150,870],[790,870]], enemies:['fast','runner','layer3','shielded','tank','splitter']},
+    {key:'storm', name:'Purple Storm City', desc:'15-wave aerial/camo map with storm-speed pacing and bigger end-round payouts.', unlock:9, lives:24, coins:505, waves:15, color:'#ff38f8', bg:'storm', mods:['15-wave sprint','Flying enemies','Camo'], path:[[80,115],[805,115],[805,290],[100,290],[100,455],[805,455],[805,640],[100,640],[100,825],[790,825]], enemies:['layer2','fast','camo','flyer','flyer','shielded','emp']},
+    {key:'lab', name:'Overclock Lab', desc:'Elite 20-wave experimental battlefield with extra boss checks at Waves 5, 10, 15, and 20.', unlock:12, lives:26, coins:545, waves:20, color:'#55d7ff', bg:'lab', mods:['20 elite waves','Boss heavy','EMP'], path:[[85,105],[460,105],[460,250],[810,250],[810,420],[270,420],[270,570],[815,570],[815,745],[95,745],[95,890],[790,890]], enemies:['layer3','shielded','tank','emp','healer','splitter','fast','camo']},
+    {key:'reactor', name:'Final Core Reactor', desc:'Elite 20-wave double entrance finale with compressed difficulty and the Final Glitch King.', unlock:16, lives:28, coins:585, waves:20, color:'#a84cff', bg:'reactor', mods:['20 elite waves','Double entrance','Final boss'], path:[[75,145],[800,145],[800,300],[115,300],[115,500],[815,500],[815,690],[155,690],[155,875],[795,875]], altPath:[[75,245],[310,245],[310,410],[805,410],[805,600],[435,600],[435,765],[795,765]], enemies:['layer3','fast','camo','flyer','shielded','tank','healer','emp','splitter']}
   ];
 
   const TOWERS = {
@@ -46,11 +46,18 @@
     healer:{name:'Healer Unit',hp:120,speed:45,reward:35,color:'#72ff15',healer:true,score:150}, emp:{name:'EMP Warden',hp:150,speed:50,reward:38,color:'#a84cff',emp:true,score:165}, splitter:{name:'Splitter Core',hp:125,speed:55,reward:32,color:'#ff8d38',split:true,score:150},
     boss:{name:'Boss Core',hp:900,speed:31,reward:140,color:'#ff4f7a',armor:8,boss:true,score:900}, final:{name:'Final Glitch King',hp:2200,speed:27,reward:300,color:'#ff38f8',armor:10,boss:true,healer:true,emp:true,score:2500}
   };
-  const LAB = [
-    {key:'coins',name:'Startup Coins',desc:'+40 starting coins per level.',cost:[2,4,7,11,16]}, {key:'rate',name:'Overclocked Towers',desc:'+4% fire rate per rank.',cost:[3,5,8,12,18]},
-    {key:'lives',name:'Core Armor',desc:'+2 core lives per rank.',cost:[3,5,9,14,20]}, {key:'cooldown',name:'Ability Cooling',desc:'Abilities recharge faster.',cost:[2,4,8,13,19]},
-    {key:'cache',name:'Cache Magnet',desc:'Bonus caches appear more often.',cost:[2,5,9,13,18]}, {key:'crit',name:'Critical Firmware',desc:'+3% tower crit chance per rank.',cost:[3,6,10,15,22]}
+  const META_UPGRADES = [
+    {key:'coins',name:'Startup Cache',desc:'+50 starting coins per rank. Helps players reach upgraded towers within 15 waves.',cost:[2,4,7,11,16]},
+    {key:'damage',name:'Global Damage Firmware',desc:'+3% damage for every attack tower per rank.',cost:[3,6,10,15,22]},
+    {key:'rate',name:'Overclocked Towers',desc:'+4% fire rate per rank for all attack towers.',cost:[3,5,8,12,18]},
+    {key:'lives',name:'Core Armor',desc:'+3 core lives per rank.',cost:[3,5,9,14,20]},
+    {key:'cooldown',name:'Ability Cooling',desc:'Abilities recharge 10% faster per rank.',cost:[2,4,8,13,19]},
+    {key:'economy',name:'Reward Multiplier',desc:'+8% coin rewards and miner income per rank.',cost:[3,6,10,15,22]},
+    {key:'cache',name:'Cache Magnet',desc:'Bonus caches appear more often during active waves.',cost:[2,5,9,13,18]},
+    {key:'crit',name:'Critical Firmware',desc:'+3% tower crit chance per rank.',cost:[3,6,10,15,22]},
+    {key:'shards',name:'Shard Amplifier',desc:'+12% post-game Core Shard rewards per rank.',cost:[4,7,12,18,25]}
   ];
+  const LAB = META_UPGRADES;
   const ACH = [
     {key:'firstWin',name:'Core Online',desc:'Win any campaign map.',check:()=>totalStars()>0}, {key:'fiveStars',name:'Campaign Climber',desc:'Earn 5 total stars.',check:()=>totalStars()>=5},
     {key:'bossSlayer',name:'Boss Slayer',desc:'Defeat 5 bosses total.',check:()=>stats.bosses>=5}, {key:'towerMaster',name:'Tower Master',desc:'Place 50 towers total.',check:()=>stats.towers>=50},
@@ -66,49 +73,61 @@
 
 
   const WAVE_BLUEPRINTS = [
-    {from:1,to:2,name:'Warmup Glitches',groups:[{type:'layer1',count:9,spacing:.46},{type:'glitch',count:3,spacing:.58}]},
-    {from:3,to:4,name:'Layer Pop Test',groups:[{type:'layer1',count:8,spacing:.38},{type:'layer2',count:6,spacing:.56},{type:'runner',count:3,spacing:.62}]},
-    {from:5,to:6,name:'Shield Pressure',groups:[{type:'layer2',count:8,spacing:.46},{type:'shielded',count:3,spacing:.86},{type:'runner',count:5,spacing:.42}]},
-    {from:7,to:9,name:'BTD Rush',groups:[{type:'layer3',count:5,spacing:.58},{type:'fast',count:8,spacing:.34},{type:'swarm',count:8,spacing:.22}]},
-    {from:10,to:14,name:'Special Forces',groups:[{type:'layer3',count:7,spacing:.50},{type:'camo',count:5,spacing:.62},{type:'shielded',count:5,spacing:.78},{type:'flyer',count:4,spacing:.72}]},
-    {from:15,to:999,name:'Overclock Swarm',groups:[{type:'layer3',count:10,spacing:.42},{type:'fast',count:9,spacing:.30},{type:'camo',count:5,spacing:.58},{type:'shielded',count:6,spacing:.62},{type:'tank',count:3,spacing:.86}]}
+    {from:1,to:1,name:'Boot Lane',groups:[{type:'layer1',count:8,spacing:.42},{type:'glitch',count:2,spacing:.58}]},
+    {from:2,to:3,name:'Layer Pop Rush',groups:[{type:'layer1',count:7,spacing:.34},{type:'layer2',count:5,spacing:.48},{type:'runner',count:2,spacing:.54}]},
+    {from:4,to:4,name:'Shield Check',groups:[{type:'layer2',count:7,spacing:.40},{type:'shielded',count:2,spacing:.78},{type:'runner',count:4,spacing:.36}]},
+    {from:5,to:5,name:'Minor Boss I',groups:[{type:'layer2',count:8,spacing:.36},{type:'shielded',count:3,spacing:.62},{type:'runner',count:5,spacing:.32}]},
+    {from:6,to:7,name:'BTD Rush',groups:[{type:'layer3',count:4,spacing:.52},{type:'fast',count:6,spacing:.30},{type:'swarm',count:7,spacing:.20}]},
+    {from:8,to:9,name:'Special Forces',groups:[{type:'layer3',count:6,spacing:.46},{type:'camo',count:4,spacing:.56},{type:'flyer',count:3,spacing:.64},{type:'shielded',count:3,spacing:.68}]},
+    {from:10,to:10,name:'Minor Boss II',groups:[{type:'layer3',count:7,spacing:.40},{type:'fast',count:7,spacing:.28},{type:'camo',count:4,spacing:.52},{type:'tank',count:2,spacing:.78}]},
+    {from:11,to:12,name:'Overclock Swarm',groups:[{type:'layer3',count:8,spacing:.38},{type:'fast',count:7,spacing:.27},{type:'shielded',count:5,spacing:.56},{type:'swarm',count:8,spacing:.18}]},
+    {from:13,to:14,name:'Pre-Final Surge',groups:[{type:'layer3',count:9,spacing:.35},{type:'fast',count:8,spacing:.25},{type:'camo',count:5,spacing:.48},{type:'tank',count:3,spacing:.68}]},
+    {from:15,to:15,name:'Final Boss Core',groups:[{type:'layer3',count:10,spacing:.32},{type:'shielded',count:6,spacing:.50},{type:'fast',count:8,spacing:.24},{type:'tank',count:3,spacing:.64}]},
+    {from:16,to:19,name:'Elite Reactor Surge',groups:[{type:'layer3',count:11,spacing:.32},{type:'fast',count:9,spacing:.24},{type:'camo',count:6,spacing:.45},{type:'shielded',count:6,spacing:.50},{type:'tank',count:3,spacing:.62}]},
+    {from:20,to:999,name:'Elite Final Boss Core',groups:[{type:'layer3',count:12,spacing:.30},{type:'fast',count:10,spacing:.22},{type:'camo',count:7,spacing:.42},{type:'shielded',count:7,spacing:.48},{type:'tank',count:4,spacing:.58}]}
   ];
 
   class WaveManager {
-    constructor(level, mode){this.level=level;this.mode=mode;}
+    constructor(level, mode){this.level=level;this.mode=mode;this.maxWaves=mode==='Endless'?999:(level.waves||15);}
     templateFor(wave){return WAVE_BLUEPRINTS.find(w=>wave>=w.from&&wave<=w.to)||WAVE_BLUEPRINTS[WAVE_BLUEPRINTS.length-1];}
     getWave(wave){
       const tpl=this.templateFor(wave);
       const mobile=isMobile();
       const levelPool=this.level.enemies||['layer1','layer2','glitch'];
-      const scale=mobile ? .82 : 1;
-      const pressure=Math.min(2.6,1+wave*.045+(this.mode==='Endless'?wave*.018:0));
-      const spacingMul=clamp(1-wave*.008,.72,1);
+      const maxWaves=this.maxWaves===999?Math.max(20,wave+5):this.maxWaves;
+      const progress=clamp(wave/maxWaves,0,1.35);
+      const elite=this.maxWaves>=20;
+      const scale=(mobile ? .74 : 1) * (elite ? 1.06 : .96);
+      const pressure=this.mode==='Endless' ? Math.min(3.15,1+wave*.05) : (0.88 + progress*1.32 + wave*.015);
+      const spacingMul=clamp(1-progress*.26,.66,1);
       const groups=[];
       for(const g of tpl.groups){
         let type=levelPool.includes(g.type)?g.type:g.type;
         if(wave<4&&['tank','healer','emp','flyer','camo','shielded','layer3','fast'].includes(type)) type=wave<3?'layer1':'layer2';
         let count=Math.max(1,Math.round(g.count*scale*pressure));
-        if(mobile&&wave>=7)count=Math.min(count, type==='swarm'?9:12);
-        groups.push({type,count,spacing:Math.max(.20,g.spacing*spacingMul)});
+        if(mobile&&wave>=7)count=Math.min(count, type==='swarm'?8:11);
+        if(mobile&&this.maxWaves<=15&&wave>=12)count=Math.min(count, type==='tank'?3:12);
+        groups.push({type,count,spacing:Math.max(.18,g.spacing*spacingMul)});
       }
-      if(wave>=4&&levelPool.includes('camo')&&wave%4===0)groups.push({type:'camo',count:mobile?2:3,spacing:.72});
-      if(wave>=6&&levelPool.includes('flyer')&&wave%3===0)groups.push({type:'flyer',count:mobile?2:4,spacing:.66});
-      if(wave>=8&&levelPool.includes('healer')&&wave%4===1)groups.push({type:'healer',count:1+Math.floor(wave/12),spacing:1.05});
-      if(wave%5===0)groups.push({type:wave>=game.maxWaves?'final':'boss',count:1,spacing:1.25});
-      return {wave,name:tpl.name,groups};
+      if(wave>=4&&levelPool.includes('camo')&&(wave===8||wave===12||wave%4===0))groups.push({type:'camo',count:mobile?2:3,spacing:.60});
+      if(wave>=6&&levelPool.includes('flyer')&&(wave===9||wave%3===0))groups.push({type:'flyer',count:mobile?2:4,spacing:.58});
+      if(wave>=8&&levelPool.includes('healer')&&(wave%4===1||wave>=14))groups.push({type:'healer',count:mobile?1:2,spacing:.92});
+      const finalWave=this.maxWaves!==999&&wave>=this.maxWaves;
+      const bossWave=finalWave || wave%5===0;
+      if(bossWave)groups.push({type:finalWave?'final':'boss',count:1,spacing:.95});
+      return {wave,name:tpl.name,groups,finalWave,bossWave};
     }
     buildQueue(wave, plan=this.getWave(wave)){
       const queue=[];
-      let time=.15;
+      let time=.12;
       const altChance=this.level.altPath ? .36 : 0;
-      const maxQueue=isMobile()?72:110;
+      const maxQueue=isMobile()?58:94;
       for(const group of plan.groups){
         for(let i=0;i<group.count&&queue.length<maxQueue;i++){
           queue.push({type:group.type,delay:time,alt:Math.random()<altChance,spacing:group.spacing});
           time+=group.spacing;
         }
-        time+=Math.min(.9,group.spacing*1.8);
+        time+=Math.min(.76,group.spacing*1.55);
       }
       return queue.sort((a,b)=>a.delay-b.delay);
     }
@@ -117,7 +136,7 @@
 
   let stats = Object.assign({bosses:0,towers:0,score:0,wins:0}, save.stats || {});
 
-  let game = null, last = performance.now(), toastTimer = 0, dockTab = 'towers', audioUnlocked = false, audioCtx = null;
+  let game = null, last = performance.now(), toastTimer = 0, dockTab = 'towers', audioUnlocked = false, audioCtx = null, resultAnimFrame = 0;
   let uiTimer = 0, fxBudgetTimer = 0, frameNow = 0, staticCanvas = null, staticCtx = null, staticKey = '';
   let lastSoundAt = {};
   const PERF = { maxEnemies: 44, maxProjectiles: 42, maxEffects: 40, maxFloating: 20, uiHz: 5, soundGap: 110 };
@@ -134,7 +153,10 @@
   function merge(a,b){const out=Array.isArray(b)?[]:{};for(const k in b){out[k]=typeof b[k]==='object'&&b[k]!==null&&!Array.isArray(b[k])?merge(a?.[k]||{},b[k]):(a?.[k]??b[k])}for(const k in a||{}) if(!(k in out)) out[k]=a[k]; return out;}
   function persist(){save.stats=stats;localStorage.setItem(saveKey,JSON.stringify(save)); updateMenu();}
   function totalStars(){return Object.values(save.stars||{}).reduce((a,b)=>a+(b||0),0)}
-  function labRank(k){return save.lab[k]||0}
+  function metaRank(k){return (save.meta&&save.meta[k]!==undefined?save.meta[k]:(save.lab&&save.lab[k])||0)||0}
+  function labRank(k){return metaRank(k)}
+  function buyMetaUpgrade(item){const r=metaRank(item.key), next=item.cost[r]; if(next===undefined||save.shards<next)return false; save.shards-=next; save.meta=save.meta||{}; save.meta[item.key]=r+1; if(save.lab&&item.key in save.lab)save.lab[item.key]=r+1; playSound('upgrade'); persist(); return true}
+  function coinMultiplier(){return 1 + metaRank('economy')*.08 + ((game && game.maxWaves<=15) ? .08 : .04)}
   function levelByKey(k){return LEVELS.find(l=>l.key===k)||LEVELS[0]}
   function unlocked(level){return totalStars()>=level.unlock}
 
@@ -156,14 +178,23 @@
   $('modalClose').onclick=closeModal;
 
   function renderMaps(){const grid=$('mapGrid');grid.innerHTML='';LEVELS.forEach((l,i)=>{const stars=save.stars[l.key]||0;const isOpen=unlocked(l);const card=document.createElement('div');card.className='map-card glass';card.innerHTML=`<div class="card-row"><h3>${isOpen?'':'🔒 '}${l.name}</h3><span class="tag">${'⭐'.repeat(stars)||'No stars'}</span></div><p>${l.desc}</p><div class="tag-row">${l.mods.map(m=>`<span class="tag">${m}</span>`).join('')}<span class="tag">${l.waves} waves</span></div><br><button class="big-btn ${isOpen?'primary':''}" ${isOpen?'':'disabled'}>${isOpen?'Play Level':`Need ${l.unlock} stars`}</button>`;card.querySelector('button').onclick=()=>startGame(l.key,'Campaign');grid.appendChild(card);});}
-  function renderLab(){const grid=$('labGrid');grid.innerHTML='';LAB.forEach(item=>{const r=labRank(item.key);const next=item.cost[r];const card=document.createElement('div');card.className='lab-card glass';card.innerHTML=`<h3>${item.name} <span class="tag">Rank ${r}/5</span></h3><p>${item.desc}</p><div class="card-row"><span class="tag">Core Shards: ${save.shards}</span><button class="big-btn primary" ${next===undefined||save.shards<next?'disabled':''}>${next===undefined?'MAX':`Upgrade ${next} shards`}</button></div>`;card.querySelector('button').onclick=()=>{if(next!==undefined&&save.shards>=next){save.shards-=next;save.lab[item.key]=r+1;playSound('upgrade');persist();renderLab();}};grid.appendChild(card);});}
+  function renderLab(){
+    const grid=$('labGrid');grid.innerHTML='';
+    LAB.forEach(item=>{
+      const r=metaRank(item.key);const next=item.cost[r];
+      const card=document.createElement('div');card.className='lab-card glass';
+      card.innerHTML=`<h3>${item.name} <span class="tag">Rank ${r}/5</span></h3><p>${item.desc}</p><div class="meta-progress"><i style="width:${Math.round(r/5*100)}%"></i></div><div class="card-row"><span class="tag">Core Shards: ${save.shards}</span><button class="big-btn primary" ${next===undefined||save.shards<next?'disabled':''}>${next===undefined?'MAX':`Upgrade ${next} shards`}</button></div>`;
+      card.querySelector('button').onclick=()=>{if(buyMetaUpgrade(item))renderLab();};
+      grid.appendChild(card);
+    });
+  }
   function renderAchievements(){checkAchievements();const grid=$('achievementGrid');grid.innerHTML='';ACH.forEach(a=>{const done=!!save.achievements[a.key];const card=document.createElement('div');card.className='achievement-card glass';card.innerHTML=`<h3>${done?'✅':'⬛'} ${a.name}</h3><p>${a.desc}</p><span class="tag">${done?'Claimed +2 shards':'Locked'}</span>`;grid.appendChild(card);});}
   function checkAchievements(){ACH.forEach(a=>{if(!save.achievements[a.key]&&a.check()){save.achievements[a.key]=true;save.shards+=2;showToast(`Achievement unlocked: ${a.name} +2 shards`);}});persist();}
 
   function startGame(levelKey, mode){
     unlockAudio();
     const level=levelByKey(levelKey);
-    const labCoins=labRank('coins')*40, labLives=labRank('lives')*2;
+    const labCoins=metaRank('coins')*50 + metaRank('economy')*12, labLives=metaRank('lives')*3;
     game={
       mode,levelKey,level,wave:1,maxWaves:mode==='Endless'?999:level.waves,
       lives:level.lives+labLives,coins:level.coins+labCoins,score:0,kills:0,bossKills:0,
@@ -174,7 +205,7 @@
       abilities:{emp:0,repair:0,overdrive:0,mine:0,drone:0,pulse:0},
       overdrive:0,perfect:true,combo:0,comboTimer:0,cacheTimer:8,shake:0,uiTimer:0,
       perfWarned:false,shakeCap:0,message:'Pick a tower, then tap the field.',uiDirty:true,perfMode:false,
-      turboBonus:0,pulseReady:false,waveManager:null
+      turboBonus:0,pulseReady:false,waveManager:null,runStartedAt:performance.now(),coinMul:1+metaRank('economy')*.08,shardMul:1+metaRank('shards')*.12
     };
     game.waveManager=new WaveManager(level,mode);
     dockTab='towers'; staticKey=''; showScreen('gameScreen');
@@ -398,7 +429,7 @@
       if(t.branch==='B')income*=1.15;
       return{damage:0,range:0,rate:0,hit:d.hit,income:Math.round(income),shardChance:t.branch==='B'?Math.min(.08+lvl*.015,.16):0};
     }
-    let damage=(24+lvl*12)*(t.type==='rocket'?1.55:t.type==='shadow'?1.85:1);
+    let damage=(24+lvl*12)*(t.type==='rocket'?1.55:t.type==='shadow'?1.85:1)*(1+metaRank('damage')*.03);
     let range=145+lvl*14+(t.type==='shadow'?90:0)+(t.type==='anti'?50:0);
     let rate=(.78+lvl*.11+(t.type==='tesla' ? .35 : 0))*(1+labRank('rate')*.04)*(game.overdrive>0?1.85:1);
     if(t.branch==='A'){
@@ -564,9 +595,10 @@
   }
   function killEnemy(e){
     if(!e.alive)return;
-    e.alive=false;game.kills++;game.combo++;game.comboTimer=2.5;game.coins+=e.reward;game.score+=e.score+game.combo*3;stats.score+=e.score;
-    addFloating(`+$${e.reward}`,e.x,e.y-42,'#ffd65a');
-    if(e.boss){game.bossKills++;stats.bosses++;game.shake=.6;addFloating('BOSS DOWN',e.x,e.y-62,'#ffd65a');}
+    const reward=Math.max(1,Math.round(e.reward*coinMultiplier()));
+    e.alive=false;game.kills++;game.combo++;game.comboTimer=2.5;game.coins+=reward;game.score+=e.score+game.combo*3;stats.score+=e.score;
+    addFloating(`+$${reward}`,e.x,e.y-42,'#ffd65a');
+    if(e.boss){game.bossKills++;stats.bosses++;game.shake=.6;addFloating(e.type==='final'?'FINAL CORE DOWN':'BOSS DOWN',e.x,e.y-62,'#ffd65a');}
     if(e.splitsTo)spawnLayerChildren(e);
     if(e.split){
       for(let i=0;i<(game.perfMode?1:2)&&game.enemies.length<PERF.maxEnemies;i++){
@@ -576,7 +608,7 @@
       }
     }
     addExplosion(e.x,e.y,e.color,e.boss?80:(e.layer?36:28));
-    if(game.combo%12===0){game.coins+=25;addFloating(`COMBO ${game.combo} +25`,e.x,e.y-55,'#a8ff24');}
+    if(game.combo%12===0){const comboReward=Math.round(25*coinMultiplier());game.coins+=comboReward;addFloating(`COMBO ${game.combo} +${comboReward}`,e.x,e.y-55,'#a8ff24');}
     playSound('coin',.12);
   }
   function nearestTower(x,y,r){let best=null,bd=r;for(const t of game.towers){const d=Math.hypot(t.x-x,t.y-y);if(d<bd){best=t;bd=d}}return best;}
@@ -606,7 +638,7 @@
     let total=0, shards=0;
     for(const t of game.towers){
       if(t.type!=='miner')continue;
-      const s=tStats(t); total+=s.income||0;
+      const s=tStats(t); total+=Math.round((s.income||0)*coinMultiplier());
       if(s.shardChance&&Math.random()<s.shardChance)shards++;
     }
     if(total>0){addFloating(`MINERS +${total}`,450,178,'#ffd65a');playSound('coin',.22);}
@@ -618,15 +650,48 @@
     if(!game.spawnQueue.length&&!game.enemies.length){
       game.waveActive=false;
       const minerIncome=collectMinerIncome();
-      let bonus=60+game.wave*9+(game.perfect?45:0)+Math.min(120,game.combo*2)+minerIncome;
-      if((game.turboBonus||0)===game.wave){bonus+=35+game.wave*4;addFloating('TURBO BONUS',450,145,'#55d7ff');}
+      const paceBonus=game.maxWaves<=15?32:20;
+      let bonus=95+game.wave*(14+paceBonus)+(game.perfect?65:0)+Math.min(160,game.combo*3)+minerIncome;
+      if((game.turboBonus||0)===game.wave){bonus+=45+game.wave*6;addFloating('TURBO BONUS',450,145,'#55d7ff');}
+      bonus=Math.round(bonus*coinMultiplier());
       game.coins+=bonus;game.score+=bonus*3;
       addFloating(game.perfect?'PERFECT WAVE':'WAVE CLEAR',450,110,game.perfect?'#ffd65a':'#a8ff24');
       showToast(`${game.perfect?'Perfect wave!':'Wave cleared.'} +${bonus} coins`);playSound('win',.55);
       if(game.wave>=game.maxWaves)endGame(true); else game.wave++;
     }
   }
-  function endGame(win){game.paused=true; const stars=win?3:(game.wave>=Math.ceil(game.maxWaves*.66)?2:game.wave>=Math.ceil(game.maxWaves*.33)?1:0); const shardReward=Math.max(1,Math.floor(game.wave/5)+stars+(win?2:0)); save.bestWave=Math.max(save.bestWave,game.wave);save.bestScore=Math.max(save.bestScore,game.score); if(game.mode==='Campaign')save.stars[game.levelKey]=Math.max(save.stars[game.levelKey]||0,stars); save.shards+=shardReward; stats.wins+=win?1:0; stats.score+=game.score; save.stats=stats; persist(); checkAchievements(); playSound(win?'win':'lose'); openModal(`<h2 class="result-title">${win?'🏆 EMX Core Saved':'💥 Core Breached'}</h2><p><strong>${game.level.name}</strong><br>Wave ${game.wave}/${game.maxWaves} • Score ${game.score} • Kills ${game.kills} • Bosses ${game.bossKills}</p><p>Earned <strong>${'⭐'.repeat(stars)||'0 stars'}</strong> and <strong>${shardReward} Core Shards</strong>.</p><div class="guide-grid"><button class="big-btn primary" id="againBtn">Run It Back</button><button class="big-btn" id="mapBtn">Map Select</button><button class="big-btn" id="labGoBtn">Spend Shards</button></div>`);setTimeout(()=>{$('againBtn').onclick=()=>{closeModal();startGame(game.levelKey,game.mode)};$('mapBtn').onclick=()=>{closeModal();showScreen('mapScreen')};$('labGoBtn').onclick=()=>{closeModal();showScreen('labScreen')}});}
+  function endGame(win){
+    game.paused=true;
+    const cap=game.maxWaves===999?Math.max(game.wave,15):game.maxWaves;
+    const stars=win?3:(game.wave>=Math.ceil(cap*.66)?2:game.wave>=Math.ceil(cap*.33)?1:0);
+    const baseShard=Math.max(1,Math.floor((Math.min(game.wave,cap)/cap)*5)+stars+(win?3:0));
+    const shardReward=Math.max(1,Math.round(baseShard*(game.shardMul||1)));
+    const result={win,stars,shardReward,levelName:game.level.name,wave:game.wave,maxWaves:cap,score:Math.floor(game.score),kills:game.kills,bossKills:game.bossKills,perfect:game.perfect,mode:game.mode,seconds:Math.max(1,Math.round((performance.now()-(game.runStartedAt||performance.now()))/1000))};
+    save.bestWave=Math.max(save.bestWave,game.wave);save.bestScore=Math.max(save.bestScore,game.score);
+    if(game.mode==='Campaign')save.stars[game.levelKey]=Math.max(save.stars[game.levelKey]||0,stars);
+    save.shards+=shardReward; stats.wins+=win?1:0; stats.score+=game.score; save.stats=stats; persist(); checkAchievements(); playSound(win?'win':'lose');
+    openResultModal(result);
+  }
+  function openResultModal(r){
+    const title=r.win?'🏆 EMX CORE SAVED':'💥 CORE BREACHED';
+    const sub=r.win?'Defense complete. Rewards secured.':'The core fell, but your upgrades still matter.';
+    const stars=Array.from({length:3},(_,i)=>`<span class="result-star ${i<r.stars?'earned':''}" data-star="${i}">★</span>`).join('');
+    const badge=r.maxWaves>=20?'ELITE 20-WAVE RUN':'15-WAVE SPRINT';
+    openModal(`<div class="win-card ${r.win?'victory':'defeat'}"><span class="glitch-orb one"></span><span class="glitch-orb two"></span><div class="win-content"><p class="eyebrow">${badge}</p><h2 class="result-title">${title}</h2><p class="result-subtitle">${sub}<br><strong>${r.levelName}</strong> • ${r.mode}</p><div class="star-row">${stars}</div><div class="result-stats"><div class="result-stat"><span>Score</span><b class="tally" data-count="${r.score}">0</b></div><div class="result-stat"><span>Kills</span><b class="tally" data-count="${r.kills}">0</b></div><div class="result-stat"><span>Bosses</span><b class="tally" data-count="${r.bossKills}">0</b></div><div class="result-stat"><span>Wave</span><b><span class="tally" data-count="${r.wave}">0</span>/${r.maxWaves}</b></div></div><div class="reward-strip"><span>+<b class="tally" data-count="${r.shardReward}">0</b> Core Shards</span><span>${r.perfect?'Perfect Core Bonus':'Core Damage Taken'}</span></div><div class="win-actions"><button class="big-btn primary" id="againBtn">Run It Back</button><button class="big-btn" id="mapBtn">Map Select</button><button class="big-btn" id="labGoBtn">Spend Shards</button></div></div></div>`);
+    setTimeout(()=>{animateResultTallies();animateStars(r.stars);$('againBtn').onclick=()=>{closeModal();startGame(game.levelKey,game.mode)};$('mapBtn').onclick=()=>{closeModal();showScreen('mapScreen')};$('labGoBtn').onclick=()=>{closeModal();showScreen('labScreen')}});
+  }
+  function animateResultTallies(){
+    const els=[...document.querySelectorAll('#modalBody .tally')];
+    const start=performance.now(), duration=760;
+    cancelAnimationFrame(resultAnimFrame);
+    const step=(now)=>{const t=clamp((now-start)/duration,0,1), eased=1-Math.pow(1-t,3); for(const el of els){const target=Number(el.dataset.count||0); el.textContent=Math.floor(target*eased).toLocaleString();} if(t<1)resultAnimFrame=requestAnimationFrame(step);};
+    resultAnimFrame=requestAnimationFrame(step);
+  }
+  function animateStars(count){
+    [...document.querySelectorAll('#modalBody .result-star')].forEach((star,i)=>{
+      setTimeout(()=>{star.classList.add('pop'); if(i<count){$('modal').classList.add('result-shake'); setTimeout(()=>$('modal').classList.remove('result-shake'),150);}},220+i*160);
+    });
+  }
 
   function useAbility(k){
     if(game.abilities[k]>0)return; unlockAudio();
@@ -686,7 +751,7 @@
   function openBranchModal(){const t=selectedTower(); if(!t||t.branch)return; const d=TOWERS[t.type];openModal(`<h2>Choose ${d.name} Branch</h2><p>This tower becomes more specialized. Choose one path.</p><div class="branch-grid"><button class="branch-card" id="branchA"><h3>${d.branchA[0]}</h3><p>${d.branchA[1]}</p></button><button class="branch-card" id="branchB"><h3>${d.branchB[0]}</h3><p>${d.branchB[1]}</p></button></div>`);setTimeout(()=>{$('branchA').onclick=()=>{t.branch='A';closeModal();showTowerPanel();playSound('upgrade')};$('branchB').onclick=()=>{t.branch='B';closeModal();showTowerPanel();playSound('upgrade')}});}
 
   canvas.addEventListener('pointerdown',e=>{e.preventDefault();unlockAudio();});
-  canvas.addEventListener('pointerup',e=>{e.preventDefault();if(!game||game.paused)return; const p=canvasPoint(e); const crate=game.crates.find(c=>Math.hypot(c.x-p.x,c.y-p.y)<40); if(crate){const reward=choice([50,65,80,100]);game.coins+=reward;game.score+=reward*4;crate.life=0;addExplosion(crate.x,crate.y,'#ffd65a',35);addFloating(`+${reward}`,crate.x,crate.y,'#ffd65a');playSound('coin');return} if(game.selectedTool)placeTool(game.selectedTool,p.x,p.y); else if(game.selectedType)placeTower(p.x,p.y); else selectTower(p.x,p.y); updateUI();});
+  canvas.addEventListener('pointerup',e=>{e.preventDefault();if(!game||game.paused)return; const p=canvasPoint(e); const crate=game.crates.find(c=>Math.hypot(c.x-p.x,c.y-p.y)<40); if(crate){const reward=Math.round(choice([60,80,100,125])*coinMultiplier());game.coins+=reward;game.score+=reward*4;crate.life=0;addExplosion(crate.x,crate.y,'#ffd65a',35);addFloating(`+${reward}`,crate.x,crate.y,'#ffd65a');playSound('coin');return} if(game.selectedTool)placeTool(game.selectedTool,p.x,p.y); else if(game.selectedType)placeTower(p.x,p.y); else selectTower(p.x,p.y); updateUI();});
   function canvasPoint(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}}
 
   function distPath(x,y){let min=9999;const paths=[game?.level.path||LEVELS[0].path,game?.level.altPath].filter(Boolean);for(const path of paths){for(let i=0;i<path.length-1;i++){const a=path[i],b=path[i+1];const dx=b[0]-a[0],dy=b[1]-a[1],len=dx*dx+dy*dy,t=len?clamp(((x-a[0])*dx+(y-a[1])*dy)/len,0,1):0;min=Math.min(min,Math.hypot(x-(a[0]+dx*t),y-(a[1]+dy*t)));}}return min;}
@@ -758,8 +823,8 @@
   function updateUI(full=true){if(!game)return; setText('waveText',`${game.wave}/${game.maxWaves===999?'∞':game.maxWaves}`);setText('livesText',game.lives);setText('coinsText',Math.floor(game.coins));setText('scoreText',Math.floor(game.score));setText('startWaveBtn',game.waveActive?'Wave Running':'Start Wave');setText('pauseBtn',game.paused?'Resume':'Pause');setText('speedBtn',`${game.speed}x Speed`);setText('soundBtn',save.settings.sound?'🔊':'🔇');setText('statusText',game.perfMode?'Performance mode active — heavy wave optimized.':(game.message||'Ready.')); const boss=game.enemies.find(e=>e.boss); if(boss){$('bossBar').classList.remove('hidden');$('bossBarFill').style.width=`${clamp(boss.hp/boss.maxHp*100,0,100)}%`;setText('bossBarText',`${boss.name} ${Math.ceil(boss.hp)}/${boss.maxHp}`)}else $('bossBar').classList.add('hidden'); if(full||dockTab==='abilities')renderDock(); if(full){renderMissions(); if(game.selectedTowerId)showTowerPanel();}}
   function renderMissions(){const m=[{t:'Place 3 towers',d:game.towers.length>=3},{t:'Defeat 25 enemies',d:game.kills>=25},{t:'Clear boss wave',d:game.bossKills>0},{t:'Keep perfect core',d:game.perfect&&game.wave>1}];$('missionList').innerHTML=m.map(x=>`<div class="mission-item ${x.d?'done':''}"><span>${x.t}</span><b>${x.d?'DONE':'ACTIVE'}</b></div>`).join('')}
 
-  function openModal(html){$('modalBody').innerHTML=html;$('modal').classList.remove('hidden')} function closeModal(){$('modal').classList.add('hidden')}
-  function openGuide(){playSound('tap');openModal(`<h2>📘 EMX Defense Guide</h2><div class="guide-grid"><p><strong>BTD Layers:</strong> Purple multi-layer glitches pop into green layers, then blue layers. If a bigger layer reaches the core, it costs more lives.</p><p><strong>Projectiles:</strong> Shadow/Prism shots pierce through multiple enemies, Rocket/Mine attacks explode in an AoE, and Tesla chains to nearby targets.</p><p><strong>Status Effects:</strong> Cryo freezes and slows, Flame burns over time, and Venom refreshes poison timers instead of stacking infinitely.</p><p><strong>Special Enemies:</strong> Shielded enemies punish weak hits, fast enemies resist slows, camo enemies need Shadow Sniper, Prism Scanner, or EMX Hub scanner support.</p><p><strong>Support + Economy:</strong> EMX Hub buffs nearby tower speed and can reveal camo. Crypto Miner generates bonus coins every cleared wave and Path B can mine Core Shards.</p><p><strong>Targeting:</strong> Tap a tower, then use Target to switch First, Last, Strongest, or Closest targeting.</p><p><strong>Wave Manager:</strong> Waves now spawn from enemy groups with spacing, bosses every 5 waves, and smoother late-game pacing for mobile.</p></div>`)}
+  function openModal(html){cancelAnimationFrame(resultAnimFrame);$('modal').classList.remove('result-shake');$('modalBody').innerHTML=html;$('modal').classList.remove('hidden')} function closeModal(){cancelAnimationFrame(resultAnimFrame);$('modal').classList.remove('result-shake');$('modal').classList.add('hidden')}
+  function openGuide(){playSound('tap');openModal(`<h2>📘 EMX Defense Guide</h2><div class="guide-grid"><p><strong>BTD Layers:</strong> Purple multi-layer glitches pop into green layers, then blue layers. If a bigger layer reaches the core, it costs more lives.</p><p><strong>Projectiles:</strong> Shadow/Prism shots pierce through multiple enemies, Rocket/Mine attacks explode in an AoE, and Tesla chains to nearby targets.</p><p><strong>Status Effects:</strong> Cryo freezes and slows, Flame burns over time, and Venom refreshes poison timers instead of stacking infinitely.</p><p><strong>Special Enemies:</strong> Shielded enemies punish weak hits, fast enemies resist slows, camo enemies need Shadow Sniper, Prism Scanner, or EMX Hub scanner support.</p><p><strong>Support + Economy:</strong> EMX Hub buffs nearby tower speed and can reveal camo. Crypto Miner generates bonus coins every cleared wave and Path B can mine Core Shards.</p><p><strong>Targeting:</strong> Tap a tower, then use Target to switch First, Last, Strongest, or Closest targeting.</p><p><strong>Wave Manager:</strong> Campaign maps are compressed into 15-wave sprints. Elite maps run 20 waves. Boss checks hit every 5 waves, with a final boss at the cap.</p><p><strong>Spend Shards:</strong> Core Shards buy permanent meta upgrades like startup coins, global damage, faster cooldowns, reward multipliers, and shard boosts.</p></div>`)}
   function openSettings(){playSound('tap');openModal(`<h2>⚙️ Settings</h2><div class="guide-grid"><button id="setSound" class="big-btn">Sound: ${save.settings.sound?'ON':'OFF'}</button><button id="setVibrate" class="big-btn">Vibration: ${save.settings.vibrate?'ON':'OFF'}</button><button id="setReduced" class="big-btn">Performance FX: ${save.settings.reduced?'LOW':'AUTO'}</button><button id="resetAll" class="big-btn danger">Reset Save</button></div>`);setTimeout(()=>{$('setSound').onclick=()=>{save.settings.sound=!save.settings.sound;persist();openSettings()};$('setVibrate').onclick=()=>{save.settings.vibrate=!save.settings.vibrate;persist();openSettings()};$('setReduced').onclick=()=>{save.settings.reduced=!save.settings.reduced;persist();openSettings()};$('resetAll').onclick=()=>{localStorage.removeItem(saveKey);save=loadSave();stats={bosses:0,towers:0,score:0,wins:0};closeModal();updateMenu();}})}
   function showToast(msg,ms=1600){$('toast').textContent=msg;$('toast').classList.remove('hidden');toastTimer=ms/1000; if(save.settings.vibrate&&navigator.vibrate)navigator.vibrate(18)}
 

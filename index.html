@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>EMX Tower Defense V5 Phase 2</title>
+  <title>EMX Tower Defense V6 Phase 3</title>
   <meta name="theme-color" content="#050509" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -11,14 +11,14 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
   <link rel="icon" type="image/png" href="assets/favicon.png" />
-  <link rel="stylesheet" href="style.css?v=50" />
-  <script src="script.js?v=50" defer></script>
+  <link rel="stylesheet" href="style.css?v=60" />
+  <script src="script.js?v=60" defer></script>
 </head>
 <body>
   <div id="boot" class="boot">
     <img src="assets/emx-logo.png" alt="EMX" class="boot-logo" />
-    <h1>EMX Tower Defense V5 Phase 2</h1>
-    <p>Projectiles, status effects, and waves initializing...</p>
+    <h1>EMX Tower Defense V6 Phase 3</h1>
+    <p>15-wave sprint pacing, shard economy, and reward screen initializing...</p>
     <div class="boot-bar"><span></span></div>
   </div>
 
@@ -28,7 +28,7 @@
         <img src="assets/emx-banner.png" alt="EMX" class="hero-banner" />
         <p class="eyebrow">Full EMX Tower Defense</p>
         <h1>Core Defense</h1>
-        <p class="subtitle">BTD-style layered glitches, pierce projectiles, AoE blasts, chain lightning, burn/venom/freeze effects, wave scaling, support/economy nodes, bosses, branches, and endless replay.</p>
+        <p class="subtitle">BTD-style layered glitches, pierce, AoE, chain lightning, status effects, 15-wave campaign sprints, 20-wave elite maps, meta upgrades, animated rewards, bosses, branches, and endless replay.</p>
         <div class="save-row four">
           <span>Best Wave <strong id="bestWaveText">0</strong></span>
           <span>Best Score <strong id="bestScoreText">0</strong></span>
@@ -40,7 +40,7 @@
         <button id="campaignBtn" class="big-btn primary">🗺️ Play Campaign</button>
         <button id="endlessBtn" class="big-btn">♾️ Endless Mode</button>
         <button id="dailyBtn" class="big-btn">☀️ Daily Challenge</button>
-        <button id="labBtn" class="big-btn">🧪 Tower Lab + Permanent Upgrades</button>
+        <button id="labBtn" class="big-btn">🧪 Spend Shards + Permanent Upgrades</button>
         <button id="achievementsBtn" class="big-btn">🏆 Achievements</button>
         <button id="guideBtn" class="big-btn">📘 Tower + Enemy Guide</button>
         <button id="settingsBtn" class="big-btn">⚙️ Settings</button>
@@ -79,7 +79,7 @@
           <button id="soundBtn" class="mini-btn">🔊</button>
         </div>
         <div class="stat-row">
-          <div><span>Wave</span><strong id="waveText">1/30</strong></div>
+          <div><span>Wave</span><strong id="waveText">1/15</strong></div>
           <div><span>Lives</span><strong id="livesText">25</strong></div>
           <div><span>Coins</span><strong id="coinsText">350</strong></div>
           <div><span>Score</span><strong id="scoreText">0</strong></div>
